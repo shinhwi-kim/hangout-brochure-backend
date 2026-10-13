@@ -40,3 +40,20 @@ Response shape:
   "hasNext": true
 }
 ```
+
+Invalid requests return `400 Bad Request` with a consistent error body:
+
+```json
+{
+  "status": 400,
+  "code": "INVALID_PARAMETER",
+  "message": "Request parameters are invalid.",
+  "errors": [
+    {
+      "field": "size",
+      "reason": "must be greater than or equal to 1"
+    }
+  ],
+  "path": "/api/hangouts"
+}
+```
