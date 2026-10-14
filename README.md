@@ -15,25 +15,21 @@ The default local connection is `localhost:5432`, database `hangout_brochure`, u
 
 `hangout_categories` has explicitly seeded integer IDs, a stable unique `code` (such as `music`), and a display `name`. `hangout_category_assignments` connects each UUIDv7 hangout ID to one or more categories by ID.
 
-The `/api/hangouts` endpoint is not connected to PostgreSQL yet and still returns an empty list.
-
 ## Hangout list API
 
-`GET /api/hangouts` returns a paginated list of hangouts. The endpoint currently returns an empty list until database persistence is added.
+`GET /api/hangouts` returns a cursor-paginated list of hangouts from PostgreSQL.
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
-| `keyword` | string | no | Search term for a hangout title or description |
-| `category` | string | no | Filter by stable category code, such as `music` |
+| `categories` | string list | no | Filter by one or more stable category codes, such as `music` and `sport`; repeat the parameter for each code |
 | `from` | ISO 8601 datetime | no | Start of the time window; include hangouts that continue until or beyond this time |
 | `to` | ISO 8601 datetime | no | End of the time window; include hangouts that begin by this time |
-| `west`, `south`, `east`, `north` | number | no | Map viewport bounds; provide all four together |
 | `cursor` | string | no | Opaque cursor returned by the previous response |
 | `size` | integer | no | Items per response (default `300`, maximum `500`) |
 
-The time filter matches hangouts whose duration overlaps the requested window: `hangout.startsAt <= to` and `hangout.endsAt >= from`. Results are ordered by `startsAt`, then `id`, both ascending. Pass the returned `nextCursor` to fetch the next batch.
+When multiple categories are supplied, a hangout is included if it has any of them. The time filter matches hangouts whose duration overlaps the requested window: `hangout.startsAt <= to` and `hangout.endsAt >= from`. Results are ordered by `startsAt`, then `id`, both ascending. Pass the returned `nextCursor` to fetch the next batch; it is `null` when there are no more results.
 
-Example: `/api/hangouts?category=music&from=2026-11-01T00:00:00Z&to=2026-11-30T23:59:59Z&west=126.8&south=37.4&east=127.2&north=37.7&size=20`
+Example: `/api/hangouts?categories=music&categories=sport&from=2026-11-01T00:00:00Z&to=2026-11-30T23:59:59Z&size=20`
 
 Response shape:
 
@@ -43,7 +39,7 @@ Response shape:
     {
       "id": "hangout-123",
       "title": "Neighborhood music day",
-      "categoryId": "music",
+      "categories": ["music", "sport"],
       "startsAt": "2026-11-02T10:00:00+09:00",
       "endsAt": "2026-11-02T18:00:00+09:00",
       "locationName": "Hangang Park",

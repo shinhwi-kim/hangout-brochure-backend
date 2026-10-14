@@ -8,11 +8,12 @@ import jakarta.validation.constraints.Min;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.OffsetDateTime;
+import java.util.List;
 
 @ValidHangoutSearch
 public class HangoutSearchRequest {
     private String keyword;
-    private String category;
+    private List<String> categories;
 
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
     private OffsetDateTime from;
@@ -35,8 +36,8 @@ public class HangoutSearchRequest {
 
     public String getKeyword() { return keyword; }
     public void setKeyword(String keyword) { this.keyword = keyword; }
-    public String getCategory() { return category; }
-    public void setCategory(String category) { this.category = category; }
+    public List<String> getCategories() { return categories; }
+    public void setCategories(List<String> categories) { this.categories = categories; }
     public OffsetDateTime getFrom() { return from; }
     public void setFrom(OffsetDateTime from) { this.from = from; }
     public OffsetDateTime getTo() { return to; }

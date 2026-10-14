@@ -1,11 +1,12 @@
 package com.hangoutbrochure.controller.response;
 
 import java.time.OffsetDateTime;
+import java.util.List;
 
 public record HangoutSummaryResponse(
         String id,
         String title,
-        String categoryId,
+        List<String> categories,
         OffsetDateTime startsAt,
         OffsetDateTime endsAt,
         String locationName,
