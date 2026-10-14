@@ -12,10 +12,10 @@ CREATE TABLE hangouts (
     address VARCHAR(500) NOT NULL,
     latitude DOUBLE PRECISION NOT NULL CHECK (latitude BETWEEN -90 AND 90),
     longitude DOUBLE PRECISION NOT NULL CHECK (longitude BETWEEN -180 AND 180),
-    start_at TIMESTAMPTZ NOT NULL,
-    end_at TIMESTAMPTZ NOT NULL,
+    starts_at TIMESTAMPTZ NOT NULL,
+    ends_at TIMESTAMPTZ NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT hangouts_valid_time_range CHECK (end_at >= start_at)
+    CONSTRAINT hangouts_valid_time_range CHECK (ends_at >= starts_at)
 );
 
 CREATE TABLE hangout_category_assignments (
@@ -24,7 +24,7 @@ CREATE TABLE hangout_category_assignments (
     PRIMARY KEY (hangout_id, category_id)
 );
 
-CREATE INDEX idx_hangouts_start_at_id ON hangouts (start_at, id);
+CREATE INDEX idx_hangouts_starts_at_id ON hangouts (starts_at, id);
 CREATE INDEX idx_hangout_category_assignments_category_hangout
     ON hangout_category_assignments (category_id, hangout_id);
 
@@ -80,7 +80,7 @@ sample_hangouts AS (
     JOIN hangout_categories AS category ON category.id = ((series.i - 1) % 8) + 1
     JOIN sample_locations AS location ON location.location_number = ((series.i * 7 - 1) % 12) + 1
 )
-INSERT INTO hangouts (id, title, description, location_name, address, latitude, longitude, start_at, end_at)
+INSERT INTO hangouts (id, title, description, location_name, address, latitude, longitude, starts_at, ends_at)
 SELECT
     sample_hangouts.hangout_id,
     CASE series.i
@@ -101,8 +101,8 @@ SELECT
     sample_hangouts.address,
     sample_hangouts.latitude,
     sample_hangouts.longitude,
-    schedule.start_at,
-    schedule.end_at
+    schedule.starts_at,
+    schedule.ends_at
 FROM generate_series(1, 100) AS series(i)
 JOIN sample_hangouts ON sample_hangouts.i = series.i
 CROSS JOIN LATERAL (
@@ -118,7 +118,7 @@ CROSS JOIN LATERAL (
             WHEN 7 THEN CURRENT_TIMESTAMP + INTERVAL '14 days' + (series.i % 30) * INTERVAL '1 day'
             WHEN 8 THEN CURRENT_TIMESTAMP + INTERVAL '2 months' + (series.i % 4) * INTERVAL '1 month'
             ELSE CURRENT_TIMESTAMP - INTERVAL '30 minutes'
-        END + ((series.i * 7 % 19) - 9) * INTERVAL '1 minute' AS start_at,
+        END + ((series.i * 7 % 19) - 9) * INTERVAL '1 minute' AS starts_at,
         CASE series.i % 10
             WHEN 0 THEN CURRENT_TIMESTAMP - INTERVAL '3 hours' - (series.i % 3) * INTERVAL '1 hour'
             WHEN 1 THEN CURRENT_TIMESTAMP + INTERVAL '2 hours'
@@ -130,7 +130,7 @@ CROSS JOIN LATERAL (
             WHEN 7 THEN CURRENT_TIMESTAMP + INTERVAL '15 days' + (series.i % 30) * INTERVAL '1 day'
             WHEN 8 THEN CURRENT_TIMESTAMP + INTERVAL '2 months' + (series.i % 4) * INTERVAL '1 month' + INTERVAL '4 hours'
             ELSE CURRENT_TIMESTAMP + INTERVAL '90 minutes'
-        END + ((series.i * 7 % 19) - 9) * INTERVAL '1 minute' AS end_at
+        END + ((series.i * 7 % 19) - 9) * INTERVAL '1 minute' AS ends_at
 ) AS schedule;
 
 -- Every sample has one category; every fourth sample gets a second one.

@@ -1,16 +1,24 @@
 package com.hangoutbrochure.controller;
 
-import com.hangoutbrochure.controller.request.HangoutSearchRequest;
+import com.hangoutbrochure.controller.request.HangoutListRequest;
 import com.hangoutbrochure.controller.response.HangoutListResponse;
+import com.hangoutbrochure.controller.response.HangoutSummaryResponse;
+import com.hangoutbrochure.domain.Hangout;
+import com.hangoutbrochure.service.HangoutListResult;
+import com.hangoutbrochure.service.HangoutService;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
-
 @RestController
 public class HangoutBrochureController {
+
+    private final HangoutService hangoutService;
+
+    public HangoutBrochureController(HangoutService hangoutService) {
+        this.hangoutService = hangoutService;
+    }
 
     @GetMapping("/api/hello")
     public String hello() {
@@ -18,8 +26,34 @@ public class HangoutBrochureController {
     }
 
     @GetMapping("/api/hangouts")
-    public HangoutListResponse getHangouts(@Valid @ModelAttribute HangoutSearchRequest request) {
-        // The database-backed cursor lookup will be added with the persistence layer.
-        return new HangoutListResponse(List.of(), request.getSize(), null, false);
+    public HangoutListResponse getHangouts(@Valid @ModelAttribute HangoutListRequest request) {
+        HangoutListResult result = hangoutService.listHangouts(
+                request.categories(),
+                request.from(),
+                request.to(),
+                request.size(),
+                request.cursor()
+        );
+
+        return new HangoutListResponse(
+                result.items().stream().map(this::toResponse).toList(),
+                result.items().size(),
+                result.nextCursor(),
+                result.hasNext()
+        );
+    }
+
+    private HangoutSummaryResponse toResponse(Hangout hangout) {
+        return new HangoutSummaryResponse(
+                hangout.id().toString(),
+                hangout.title(),
+                hangout.categories(),
+                hangout.startsAt(),
+                hangout.endsAt(),
+                hangout.locationName(),
+                hangout.address(),
+                hangout.latitude(),
+                hangout.longitude()
+        );
     }
 }

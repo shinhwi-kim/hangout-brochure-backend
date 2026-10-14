@@ -22,12 +22,12 @@ The default local connection is `localhost:5432`, database `hangout_brochure`, u
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
 | `categories` | string list | no | Filter by one or more stable category codes, such as `music` and `sport`; repeat the parameter for each code |
-| `from` | ISO 8601 datetime | no | Start of the time window; include hangouts that continue until or beyond this time |
-| `to` | ISO 8601 datetime | no | End of the time window; include hangouts that begin by this time |
-| `cursor` | string | no | Opaque cursor returned by the previous response |
+| `from` | ISO 8601 datetime | yes | Start of the required time window; include hangouts that continue until or beyond this time |
+| `to` | ISO 8601 datetime | yes | End of the required time window; include hangouts that begin by this time |
+| `cursor` | UUID | no | `nextCursor` returned by the previous response |
 | `size` | integer | no | Items per response (default `300`, maximum `500`) |
 
-When multiple categories are supplied, a hangout is included if it has any of them. The time filter matches hangouts whose duration overlaps the requested window: `hangout.startsAt <= to` and `hangout.endsAt >= from`. Results are ordered by `startsAt`, then `id`, both ascending. Pass the returned `nextCursor` to fetch the next batch; it is `null` when there are no more results.
+When multiple categories are supplied, a hangout is included if it has any of them. The required time filter matches hangouts whose duration overlaps the requested window: `hangout.startsAt <= to` and `hangout.endsAt >= from`. Results are ordered by `id` ascending. Pass the returned hangout ID in `nextCursor` to fetch the next batch; it is `null` when there are no more results.
 
 Example: `/api/hangouts?categories=music&categories=sport&from=2026-11-01T00:00:00Z&to=2026-11-30T23:59:59Z&size=20`
 

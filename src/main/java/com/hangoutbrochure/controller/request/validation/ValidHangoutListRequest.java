@@ -10,8 +10,8 @@ import java.lang.annotation.Target;
 
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
-@Constraint(validatedBy = HangoutSearchValidator.class)
-public @interface ValidHangoutSearch {
+@Constraint(validatedBy = HangoutListRequestValidator.class)
+public @interface ValidHangoutListRequest {
     String message() default "Invalid hangout search parameters";
     Class<?>[] groups() default {};
     Class<? extends Payload>[] payload() default {};
