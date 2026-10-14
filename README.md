@@ -1,5 +1,22 @@
 # Hangout Brochure
 
+## Local PostgreSQL
+
+```bash
+docker compose up -d   # Start PostgreSQL in the background
+docker compose stop    # Stop PostgreSQL and keep the container and data
+docker compose down    # Remove the container; keep database data
+docker compose down -v # Remove the container and database data
+```
+
+On first start, the init script creates the three tables and inserts eight categories and 100 sample hangouts, with varied schedules and location details. Initialization runs only when the database volume is empty.
+
+The default local connection is `localhost:5432`, database `hangout_brochure`, user `hangout_dev`, password `hangout_dev`. Override these with `POSTGRES_PORT`, `POSTGRES_DB`, `POSTGRES_USER`, and `POSTGRES_PASSWORD` environment variables. These defaults are for local development only.
+
+`hangout_categories` has explicitly seeded integer IDs, a stable unique `code` (such as `music`), and a display `name`. `hangout_category_assignments` connects each UUIDv7 hangout ID to one or more categories by ID.
+
+The `/api/hangouts` endpoint is not connected to PostgreSQL yet and still returns an empty list.
+
 ## Hangout list API
 
 `GET /api/hangouts` returns a paginated list of hangouts. The endpoint currently returns an empty list until database persistence is added.
