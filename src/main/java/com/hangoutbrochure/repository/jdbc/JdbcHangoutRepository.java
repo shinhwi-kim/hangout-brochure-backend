@@ -1,6 +1,8 @@
 package com.hangoutbrochure.repository.jdbc;
 
 import com.hangoutbrochure.domain.Hangout;
+import com.hangoutbrochure.domain.HangoutCategory;
+import com.hangoutbrochure.domain.HangoutCategoryListCriteria;
 import com.hangoutbrochure.domain.HangoutListCriteria;
 import com.hangoutbrochure.repository.HangoutRepository;
 import org.springframework.jdbc.core.RowMapper;
@@ -75,6 +77,37 @@ public class JdbcHangoutRepository implements HangoutRepository {
 
         sql.append(" ORDER BY h.id ASC LIMIT :limit");
         return jdbcTemplate.query(sql.toString(), parameters, HANGOUT_ROW_MAPPER);
+    }
+
+    @Override
+    public List<HangoutCategory> findHangoutCategories(HangoutCategoryListCriteria criteria) {
+        StringBuilder sql = new StringBuilder("""
+                SELECT id, code, name
+                FROM hangout_categories
+                WHERE TRUE
+                """);
+        MapSqlParameterSource parameters = new MapSqlParameterSource()
+                .addValue("limit", criteria.pageSize());
+
+        if (criteria.keyword() != null) {
+            sql.append(" AND (POSITION(LOWER(:keyword) IN LOWER(code)) > 0");
+            sql.append(" OR POSITION(LOWER(:keyword) IN LOWER(name)) > 0)");
+            parameters.addValue("keyword", criteria.keyword());
+        }
+
+        if (criteria.cursor() != null) {
+            sql.append(" AND id > :cursor");
+            parameters.addValue("cursor", criteria.cursor());
+        }
+
+        sql.append(" ORDER BY id ASC LIMIT :limit");
+        return jdbcTemplate.query(sql.toString(), parameters, (resultSet, rowNumber) ->
+                new HangoutCategory(
+                        resultSet.getInt("id"),
+                        resultSet.getString("code"),
+                        resultSet.getString("name")
+                )
+        );
     }
 
     private static Hangout mapHangout(ResultSet resultSet, int rowNumber) throws SQLException {

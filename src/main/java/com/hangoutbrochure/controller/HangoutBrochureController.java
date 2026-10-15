@@ -1,9 +1,15 @@
 package com.hangoutbrochure.controller;
 
 import com.hangoutbrochure.controller.request.HangoutListRequest;
+import com.hangoutbrochure.controller.request.HangoutCategoryListRequest;
+import com.hangoutbrochure.controller.response.HangoutCategoryListResponse;
+import com.hangoutbrochure.controller.response.HangoutCategoryResponse;
 import com.hangoutbrochure.controller.response.HangoutListResponse;
 import com.hangoutbrochure.controller.response.HangoutSummaryResponse;
 import com.hangoutbrochure.domain.Hangout;
+import com.hangoutbrochure.domain.HangoutCategory;
+import com.hangoutbrochure.service.HangoutCategoryListResult;
+import com.hangoutbrochure.service.HangoutCategoryService;
 import com.hangoutbrochure.service.HangoutListResult;
 import com.hangoutbrochure.service.HangoutService;
 import jakarta.validation.Valid;
@@ -15,9 +21,14 @@ import org.springframework.web.bind.annotation.RestController;
 public class HangoutBrochureController {
 
     private final HangoutService hangoutService;
+    private final HangoutCategoryService hangoutCategoryService;
 
-    public HangoutBrochureController(HangoutService hangoutService) {
+    public HangoutBrochureController(
+            HangoutService hangoutService,
+            HangoutCategoryService hangoutCategoryService
+    ) {
         this.hangoutService = hangoutService;
+        this.hangoutCategoryService = hangoutCategoryService;
     }
 
     @GetMapping("/api/hello")
@@ -43,6 +54,23 @@ public class HangoutBrochureController {
         );
     }
 
+    @GetMapping("/api/hangout-categories")
+    public HangoutCategoryListResponse getHangoutCategories(
+            @Valid @ModelAttribute HangoutCategoryListRequest request
+    ) {
+        HangoutCategoryListResult result = hangoutCategoryService.getHangoutCategories(
+                request.keyword(),
+                request.cursor(),
+                request.size()
+        );
+        return new HangoutCategoryListResponse(
+                result.items().stream().map(this::toCategoryResponse).toList(),
+                result.items().size(),
+                result.nextCursor(),
+                result.hasNext()
+        );
+    }
+
     private HangoutSummaryResponse toResponse(Hangout hangout) {
         return new HangoutSummaryResponse(
                 hangout.id().toString(),
@@ -55,5 +83,9 @@ public class HangoutBrochureController {
                 hangout.latitude(),
                 hangout.longitude()
         );
+    }
+
+    private HangoutCategoryResponse toCategoryResponse(HangoutCategory category) {
+        return new HangoutCategoryResponse(category.id(), category.code(), category.name());
     }
 }
