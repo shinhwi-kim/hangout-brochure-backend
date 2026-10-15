@@ -5,3 +5,7 @@ spring:
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/hangout_brochure}
     username: ${POSTGRES_USER:hangout_dev}
     password: ${POSTGRES_PASSWORD:hangout_dev}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false

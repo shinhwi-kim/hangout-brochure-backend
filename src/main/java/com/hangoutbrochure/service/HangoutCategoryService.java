@@ -4,6 +4,7 @@ import com.hangoutbrochure.domain.HangoutCategory;
 import com.hangoutbrochure.domain.HangoutCategoryListCriteria;
 import com.hangoutbrochure.repository.HangoutRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,6 +18,7 @@ public class HangoutCategoryService {
         this.hangoutRepository = hangoutRepository;
     }
 
+    @Transactional(readOnly = true)
     public HangoutCategoryListResult getHangoutCategories(String keyword, Integer cursor, int size) {
         HangoutCategoryListCriteria criteria = new HangoutCategoryListCriteria(
                 keyword,

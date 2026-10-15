@@ -4,6 +4,7 @@ import com.hangoutbrochure.domain.Hangout;
 import com.hangoutbrochure.domain.HangoutListCriteria;
 import com.hangoutbrochure.repository.HangoutRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
@@ -20,6 +21,7 @@ public class HangoutService {
         this.hangoutRepository = hangoutRepository;
     }
 
+    @Transactional(readOnly = true)
     public HangoutListResult getHangouts(
             List<String> categories,
             OffsetDateTime from,
