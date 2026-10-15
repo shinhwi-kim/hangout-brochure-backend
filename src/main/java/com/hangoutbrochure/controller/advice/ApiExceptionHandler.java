@@ -1,7 +1,7 @@
 package com.hangoutbrochure.controller.advice;
 
-import com.hangoutbrochure.controller.response.ApiErrorResponse;
-import com.hangoutbrochure.controller.response.ApiFieldError;
+import com.hangoutbrochure.controller.dto.response.error.ApiErrorResponse;
+import com.hangoutbrochure.controller.dto.response.error.ApiFieldError;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

@@ -1,4 +1,4 @@
-package com.hangoutbrochure.controller.response;
+package com.hangoutbrochure.controller.dto.response;
 
 import java.time.OffsetDateTime;
 import java.util.List;

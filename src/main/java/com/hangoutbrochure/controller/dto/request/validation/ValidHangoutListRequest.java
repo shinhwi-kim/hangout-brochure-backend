@@ -1,4 +1,4 @@
-package com.hangoutbrochure.controller.request.validation;
+package com.hangoutbrochure.controller.dto.request.validation;
 
 import jakarta.validation.Constraint;
 import jakarta.validation.Payload;

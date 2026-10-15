@@ -1,11 +1,11 @@
 package com.hangoutbrochure.controller;
 
-import com.hangoutbrochure.controller.request.HangoutListRequest;
-import com.hangoutbrochure.controller.request.HangoutCategoryListRequest;
-import com.hangoutbrochure.controller.response.HangoutCategoryListResponse;
-import com.hangoutbrochure.controller.response.HangoutCategoryResponse;
-import com.hangoutbrochure.controller.response.HangoutListResponse;
-import com.hangoutbrochure.controller.response.HangoutSummaryResponse;
+import com.hangoutbrochure.controller.dto.request.HangoutListRequest;
+import com.hangoutbrochure.controller.dto.request.HangoutCategoryListRequest;
+import com.hangoutbrochure.controller.dto.response.HangoutCategoryListResponse;
+import com.hangoutbrochure.controller.dto.response.HangoutCategoryResponse;
+import com.hangoutbrochure.controller.dto.response.HangoutListResponse;
+import com.hangoutbrochure.controller.dto.response.HangoutSummaryResponse;
 import com.hangoutbrochure.domain.Hangout;
 import com.hangoutbrochure.domain.HangoutCategory;
 import com.hangoutbrochure.service.HangoutCategoryListResult;

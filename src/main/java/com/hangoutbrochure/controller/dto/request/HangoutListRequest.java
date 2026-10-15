@@ -1,6 +1,6 @@
-package com.hangoutbrochure.controller.request;
+package com.hangoutbrochure.controller.dto.request;
 
-import com.hangoutbrochure.controller.request.validation.ValidHangoutListRequest;
+import com.hangoutbrochure.controller.dto.request.validation.ValidHangoutListRequest;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
