@@ -1,5 +1,7 @@
 # Hangout Brochure
 
+서비스 구조와 향후 행사 수집 아키텍처는 [docs/architecture.md](docs/architecture.md)를 참고한다.
+
 ## Local PostgreSQL
 
 ```bash
