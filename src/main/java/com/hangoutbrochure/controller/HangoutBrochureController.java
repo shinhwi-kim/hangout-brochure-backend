@@ -27,7 +27,7 @@ public class HangoutBrochureController {
 
     @GetMapping("/api/hangouts")
     public HangoutListResponse getHangouts(@Valid @ModelAttribute HangoutListRequest request) {
-        HangoutListResult result = hangoutService.listHangouts(
+        HangoutListResult result = hangoutService.getHangouts(
                 request.categories(),
                 request.from(),
                 request.to(),

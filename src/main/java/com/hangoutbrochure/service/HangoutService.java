@@ -20,7 +20,7 @@ public class HangoutService {
         this.hangoutRepository = hangoutRepository;
     }
 
-    public HangoutListResult listHangouts(
+    public HangoutListResult getHangouts(
             List<String> categories,
             OffsetDateTime from,
             OffsetDateTime to,
