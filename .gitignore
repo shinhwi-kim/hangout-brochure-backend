@@ -60,3 +60,6 @@ out/
 
 ### VS Code ###
 .vscode/
+
+# Local environment variables and secrets
+.envrc.*
