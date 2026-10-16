@@ -14,14 +14,24 @@ public interface HangoutCategoryJpaRepository extends JpaRepository<HangoutCateg
             SELECT category
             FROM HangoutCategoryEntity category
             WHERE (:cursor IS NULL OR category.id > :cursor)
-              AND (
-                  :keyword IS NULL
-                  OR LOCATE(LOWER(:keyword), LOWER(category.code)) > 0
-                  OR LOCATE(LOWER(:keyword), LOWER(category.name)) > 0
-              )
             ORDER BY category.id ASC
             """)
     List<HangoutCategoryEntity> findCategories(
+            @Param("cursor") Integer cursor,
+            Pageable pageable
+    );
+
+    @Query("""
+            SELECT category
+            FROM HangoutCategoryEntity category
+            WHERE (:cursor IS NULL OR category.id > :cursor)
+              AND (
+                  LOCATE(LOWER(CAST(:keyword AS String)), LOWER(category.code)) > 0
+                  OR LOCATE(LOWER(CAST(:keyword AS String)), LOWER(category.name)) > 0
+              )
+            ORDER BY category.id ASC
+            """)
+    List<HangoutCategoryEntity> findCategoriesByKeyword(
             @Param("keyword") String keyword,
             @Param("cursor") Integer cursor,
             Pageable pageable

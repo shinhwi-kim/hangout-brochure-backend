@@ -99,7 +99,7 @@ ingestion.persistence      # 원문/후보/체크포인트 저장 (추가 시)
 
 cron이 Spring 애플리케이션 안에서 계속 돌도록 하기보다, 초기에 **한 번 실행 후 종료하는 명령**을 만들고 OS cron이나 컨테이너 스케줄러가 정해진 주기에 호출하는 편이 운영과 재시도에 편하다. API 서버와 수집 작업도 각각 따로 실행할 수 있다. 출처 어댑터는 수집 로직만 맡고, command는 설정을 읽어 수집 흐름을 시작하는 역할을 한다.
 
-서울시 문화행사 데이터는 [서울시 문화행사 정보](https://data.seoul.go.kr/dataList/OA-23041/S/1/datasetView.do)의 항목을 `ingestion_seoul_cultural_hangouts_raw`에 저장한다. API 응답 필드와 원본 JSON을 함께 보존하며, `ingestion_sources`에는 `seoul-cultural-events` 출처를 등록한다. `command.ingestion.IngestCommand`가 `--source` 이름에 맞는 `IngestionSource`를 선택하고, 서울 문화행사 수집 구현은 `command.ingestion.source.seoulCulturalEvent` 패키지에 둔다. `(source_name, external_id)` 고유 키로 재수집을 멱등하게 처리하며, 실행 결과는 `ingestion_runs`에 기록한다. 수집 원문은 아직 후보 검증 후 공개 행아웃으로 승격하지 않는다.
+서울시 문화행사 데이터는 [서울시 문화행사 정보](https://data.seoul.go.kr/dataList/OA-23041/S/1/datasetView.do)의 항목을 `ingestion_raw_seoul_cultural_hangouts`에 저장한다. API 응답 필드와 원본 JSON을 함께 보존하며, `ingestion_sources`에는 `seoul-cultural-events` 출처를 등록한다. `command.ingestion.IngestCommand`가 `--source` 이름에 맞는 `IngestionSource`를 선택하고, 서울 문화행사 수집 구현은 `command.ingestion.source.seoulCulturalEvent` 패키지에 둔다. `(source_name, external_id)` 고유 키로 재수집을 멱등하게 처리하며, 실행 결과는 `ingestion_runs`에 기록한다. 수집 원문은 아직 후보 검증 후 공개 행아웃으로 승격하지 않는다.
 
 현재 명령은 `SEOUL_OPEN_API_KEY` 환경 변수와 함께 다음처럼 실행한다.
 
@@ -141,7 +141,7 @@ export SEOUL_OPEN_API_KEY=발급받은_키
 
 수집과 AI 처리는 진행 상태를 분리한다.
 
-1. 출처에서 발견한 원문을 `ingestion_seoul_cultural_hangouts_raw` 등 출처별 원문 테이블에 먼저 저장한다. `(source_name, external_id)`에 고유 제약을 두어 같은 항목이 반복 발견돼도 중복 저장되지 않게 한다.
+1. 출처에서 발견한 원문을 `ingestion_raw_seoul_cultural_hangouts` 등 출처별 원문 테이블에 먼저 저장한다. `(source_name, external_id)`에 고유 제약을 두어 같은 항목이 반복 발견돼도 중복 저장되지 않게 한다.
 2. 원문 저장이 성공한 뒤 출처 체크포인트를 갱신한다. 이렇게 하면 AI 처리에 실패해도 다음 실행에서 원문을 잃지 않는다.
 3. Worker는 아직 처리되지 않았거나 원문 해시가 바뀐 문서를 AI 추출 대상으로 가져온다. 실패한 문서는 재시도하고 성공·검토 대기·실패 상태를 기록한다.
 4. 같은 원문과 같은 추출기 버전으로 이미 처리한 문서는 건너뛴다. 프롬프트나 추출 스키마를 바꾸어 재추출할 때는 추출기 버전을 바꾸어 대상 문서를 다시 처리할 수 있게 한다.
@@ -179,9 +179,9 @@ AI 결과는 구조화된 후보로 저장하고 곧바로 공개 API에 노출�
 | --- | --- |
 | `ingestion_sources` | 수집 출처 이름, 종류, 표시명, 기본 URL, 활성화 여부와 마지막 성공 시각 관리 |
 | `ingestion_runs` | 실행 시작·종료, 성공/실패, 조회·저장 건수와 오류 기록 |
-| `ingestion_seoul_cultural_hangouts_raw` | 서울 문화행사 데이터셋의 모든 행사 필드와 원본 JSON, 출처 URL·외부 ID, 내용 해시, 확인 시각 및 처리 상태 보관 |
+| `ingestion_raw_seoul_cultural_hangouts` | 서울 문화행사 데이터셋의 모든 행사 필드와 원본 JSON, 출처 URL·외부 ID, 내용 해시, 확인 시각 및 처리 상태 보관 |
 
-`ingestion_seoul_cultural_hangouts_raw`는 데이터셋의 행사 필드를 다음처럼 저장한다. `raw_payload`에도 API의 원본 행 전체를 보존한다.
+`ingestion_raw_seoul_cultural_hangouts`는 데이터셋의 행사 필드를 다음처럼 저장한다. `raw_payload`에도 API의 원본 행 전체를 보존한다.
 
 | 서울 API 필드 | 저장 컬럼 | 서울 API 필드 | 저장 컬럼 |
 | --- | --- | --- | --- |

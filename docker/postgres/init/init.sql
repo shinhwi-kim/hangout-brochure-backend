@@ -65,7 +65,7 @@ CREATE TABLE IF NOT EXISTS ingestion_runs (
 CREATE INDEX IF NOT EXISTS idx_ingestion_runs_source_started
     ON ingestion_runs (source_name, started_at DESC);
 
-CREATE TABLE IF NOT EXISTS ingestion_seoul_cultural_hangouts_raw (
+CREATE TABLE IF NOT EXISTS ingestion_raw_seoul_cultural_hangouts (
     id UUID PRIMARY KEY DEFAULT uuidv7(),
     source_name VARCHAR(100) NOT NULL REFERENCES ingestion_sources (source_name),
     external_id TEXT NOT NULL,
@@ -103,8 +103,8 @@ CREATE TABLE IF NOT EXISTS ingestion_seoul_cultural_hangouts_raw (
     UNIQUE (source_name, external_id)
 );
 
-CREATE INDEX IF NOT EXISTS idx_ingestion_seoul_cultural_hangouts_raw_processing
-    ON ingestion_seoul_cultural_hangouts_raw (processing_status, last_seen_at);
+CREATE INDEX IF NOT EXISTS idx_ingestion_raw_seoul_cultural_hangouts_processing
+    ON ingestion_raw_seoul_cultural_hangouts (processing_status, last_seen_at);
 
 INSERT INTO ingestion_sources (source_name, source_type, display_name, base_url)
 VALUES (

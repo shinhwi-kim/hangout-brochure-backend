@@ -56,11 +56,13 @@ public class HangoutRepositoryAdapter implements HangoutRepository {
 
     @Override
     public List<HangoutCategory> findHangoutCategories(HangoutCategoryListCriteria criteria) {
-        return hangoutCategoryJpaRepository.findCategories(
-                        criteria.keyword(),
-                        criteria.cursor(),
-                        PageRequest.of(0, criteria.pageSize())
-                ).stream()
+        PageRequest pageRequest = PageRequest.of(0, criteria.pageSize());
+        List<HangoutCategoryEntity> entities = criteria.keyword() == null
+                ? hangoutCategoryJpaRepository.findCategories(criteria.cursor(), pageRequest)
+                : hangoutCategoryJpaRepository.findCategoriesByKeyword(
+                        criteria.keyword(), criteria.cursor(), pageRequest);
+
+        return entities.stream()
                 .map(HangoutRepositoryAdapter::toHangoutCategory)
                 .toList();
     }

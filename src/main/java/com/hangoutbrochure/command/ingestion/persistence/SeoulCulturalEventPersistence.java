@@ -34,7 +34,7 @@ public class SeoulCulturalEventPersistence {
                 : event.sourceUrl().trim();
 
         jdbcTemplate.update("""
-                INSERT INTO ingestion_seoul_cultural_hangouts_raw (
+                INSERT INTO ingestion_raw_seoul_cultural_hangouts (
                     source_name, external_id, source_url, category, district, title, event_date,
                     place, organization, target_audience, fee, inquiry, performers, program,
                     additional_info, homepage_url, image_url, application_date, ticket_type,
