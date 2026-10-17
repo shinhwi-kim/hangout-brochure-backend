@@ -2,6 +2,31 @@
 
 서비스 구조와 향후 행사 수집 아키텍처는 [docs/architecture.md](docs/architecture.md)를 참고한다.
 
+## Configuration
+
+`application.yaml` lists every setting the application reads and holds no secrets; a secret appears there only as a placeholder such as `${SEOUL_OPEN_API_KEY:}`.
+
+```bash
+./gradlew bootRun   # reads .env, then .env.local on top of it
+```
+
+Values are layered, each source overriding the ones below it:
+
+| Priority | Source | Committed |
+| --- | --- | --- |
+| 1 | Shell environment variables | — |
+| 2 | `.env.{profile}` — `local` unless `--spring.profiles.active` says otherwise | no |
+| 3 | `.env` | yes |
+| 4 | `application.yaml` | yes |
+
+`.env` is the committed template: it names every secret with a blank value. Copy it and fill in the real values.
+
+```bash
+cp .env .env.local   # .env.local is gitignored
+```
+
+It is parsed as a Java properties file, so write `KEY=value` with no `export` prefix and no quotes — quotes are kept as part of the value. List only secrets that have no default, because a blank value overrides the `application.yaml` default with an empty string.
+
 ## Local PostgreSQL
 
 ```bash

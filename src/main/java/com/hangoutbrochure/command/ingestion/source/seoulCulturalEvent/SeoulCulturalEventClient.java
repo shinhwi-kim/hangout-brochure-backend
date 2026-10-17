@@ -28,8 +28,8 @@ public class SeoulCulturalEventClient {
 
     public SeoulCulturalEventClient(
             ObjectMapper objectMapper,
-            @Value("${ingestion.seoul.base-url:http://openapi.seoul.go.kr:8088}") String baseUrl,
-            @Value("${SEOUL_OPEN_API_KEY:}") String apiKey
+            @Value("${ingestion.seoul.base-url}") String baseUrl,
+            @Value("${ingestion.seoul.api-key}") String apiKey
     ) {
         this.httpClient = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build();
         this.objectMapper = objectMapper;

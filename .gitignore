@@ -62,4 +62,6 @@ out/
 .vscode/
 
 # Local environment variables and secrets
-.envrc.*
+# .env is committed as a template listing every secret with a blank value.
+# .env.{profile} holds the real values and is never committed.
+.env.*

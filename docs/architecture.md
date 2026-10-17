@@ -101,10 +101,9 @@ cron이 Spring 애플리케이션 안에서 계속 돌도록 하기보다, 초�
 
 서울시 문화행사 데이터는 [서울시 문화행사 정보](https://data.seoul.go.kr/dataList/OA-23041/S/1/datasetView.do)의 항목을 `ingestion_raw_seoul_cultural_hangouts`에 저장한다. API 응답 필드와 원본 JSON을 함께 보존하며, `ingestion_sources`에는 `seoul-cultural-events` 출처를 등록한다. `command.ingestion.IngestCommand`가 `--source` 이름에 맞는 `IngestionSource`를 선택하고, 서울 문화행사 수집 구현은 `command.ingestion.source.seoulCulturalEvent` 패키지에 둔다. `(source_name, external_id)` 고유 키로 재수집을 멱등하게 처리하며, 실행 결과는 `ingestion_runs`에 기록한다. 수집 원문은 아직 후보 검증 후 공개 행아웃으로 승격하지 않는다.
 
-현재 명령은 `SEOUL_OPEN_API_KEY` 환경 변수와 함께 다음처럼 실행한다.
+현재 명령은 `SEOUL_OPEN_API_KEY`를 `.env.local`에 둔 상태에서 다음처럼 실행한다. 설정 계층은 [README](../README.md#configuration)를 참고한다.
 
 ```bash
-export SEOUL_OPEN_API_KEY=발급받은_키
 ./gradlew bootRun --args='--spring.main.web-application-type=none --app.command=ingest --source=seoul-cultural-events'
 ```
 

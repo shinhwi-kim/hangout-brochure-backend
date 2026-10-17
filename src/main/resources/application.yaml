@@ -1,6 +1,10 @@
 spring:
   application:
     name: hangout-brochure
+  config:
+    import:
+      - optional:file:./.env[.properties]
+      - optional:file:./.env.${spring.profiles.active:local}[.properties]
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/hangout_brochure}
     username: ${POSTGRES_USER:hangout_dev}
@@ -9,3 +13,8 @@ spring:
     hibernate:
       ddl-auto: validate
     open-in-view: false
+
+ingestion:
+  seoul:
+    base-url: http://openapi.seoul.go.kr:8088
+    api-key: ${SEOUL_OPEN_API_KEY:}
