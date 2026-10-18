@@ -37,8 +37,9 @@ public class SeoulCulturalEventIngestionSource implements IngestionSource {
             log.info("Ingested {} Seoul cultural event records (runId={}).",
                     events.size(), runId);
             events.stream().limit(5).forEach(event -> log.info(
-                    "Ingested source record: title='{}', category='{}', district='{}', startsOn='{}', endsOn='{}'",
-                    event.title(), event.category(), event.district(), event.startsOn(), event.endsOn()
+                    "Ingested source record: cultcode={}, title='{}', category='{}', district='{}', startDate={}, endDate={}",
+                    event.cultcode(), event.title(), event.sourceCategory(), event.district(),
+                    event.startDate(), event.endDate()
             ));
         } catch (RuntimeException e) {
             persistence.failRun(runId, e.getMessage());

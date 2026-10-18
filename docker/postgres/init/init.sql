@@ -68,43 +68,43 @@ CREATE INDEX IF NOT EXISTS idx_ingestion_runs_source_started
 CREATE TABLE IF NOT EXISTS ingestion_raw_seoul_cultural_hangouts (
     id UUID PRIMARY KEY DEFAULT uuidv7(),
     source_name VARCHAR(100) NOT NULL REFERENCES ingestion_sources (source_name),
-    external_id TEXT NOT NULL,
-    source_url TEXT,
-    category TEXT,
-    district TEXT,
-    title TEXT,
-    event_date TEXT,
-    place TEXT,
-    organization TEXT,
-    target_audience TEXT,
-    fee TEXT,
-    inquiry TEXT,
-    performers TEXT,
-    program TEXT,
-    additional_info TEXT,
-    homepage_url TEXT,
-    image_url TEXT,
-    application_date TEXT,
-    ticket_type TEXT,
-    starts_on TEXT,
-    ends_on TEXT,
-    theme TEXT,
-    longitude NUMERIC(12, 8),
-    latitude NUMERIC(11, 8),
-    free_or_paid TEXT,
+    cultcode BIGINT NOT NULL UNIQUE,
     detail_url TEXT,
-    event_time TEXT,
-    raw_payload JSONB NOT NULL,
-    payload_hash CHAR(64) NOT NULL,
+    content_hash CHAR(64) NOT NULL,
     processing_status VARCHAR(20) NOT NULL DEFAULT 'PENDING'
         CHECK (processing_status IN ('PENDING', 'PROCESSING', 'PROCESSED', 'REVIEW', 'FAILED')),
     first_seen_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     last_seen_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE (source_name, external_id)
+    title TEXT,
+    source_category TEXT,
+    source_theme TEXT,
+    district TEXT,
+    place TEXT,
+    organizer TEXT,
+    organizer_url TEXT,
+    start_date DATE,
+    end_date DATE,
+    event_time_desc TEXT,
+    register_date DATE,
+    target_audience TEXT,
+    fee_desc TEXT,
+    is_free BOOLEAN,
+    ticket_type TEXT,
+    contact TEXT,
+    performers TEXT,
+    program_desc TEXT,
+    etc_desc TEXT,
+    image_url TEXT,
+    latitude NUMERIC(11, 8),
+    longitude NUMERIC(12, 8)
 );
 
 CREATE INDEX IF NOT EXISTS idx_ingestion_raw_seoul_cultural_hangouts_processing
     ON ingestion_raw_seoul_cultural_hangouts (processing_status, last_seen_at);
+
+-- Not unique on purpose: the source registers the same event under more than one cultcode.
+CREATE INDEX IF NOT EXISTS idx_ingestion_raw_seoul_cultural_hangouts_content_hash
+    ON ingestion_raw_seoul_cultural_hangouts (content_hash);
 
 INSERT INTO ingestion_sources (source_name, source_type, display_name, base_url)
 VALUES (

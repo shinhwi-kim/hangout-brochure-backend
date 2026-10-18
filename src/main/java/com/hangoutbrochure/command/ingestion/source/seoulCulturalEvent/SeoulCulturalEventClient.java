@@ -12,14 +12,19 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
+import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Component
 public class SeoulCulturalEventClient {
 
     private static final int PAGE_SIZE = 1000;
     private static final String SERVICE_NAME = "culturalEventInfo";
+    private static final Pattern CULTCODE = Pattern.compile("cultcode=(\\d+)");
 
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
@@ -98,16 +103,62 @@ public class SeoulCulturalEventClient {
     }
 
     private SeoulCulturalEventRecord toRecord(JsonNode row) {
+        String detailUrl = text(row, "HMPG_ADDR");
         return new SeoulCulturalEventRecord(
-                text(row, "CODENAME"), text(row, "GUNAME"), text(row, "TITLE"),
-                text(row, "DATE"), text(row, "PLACE"), text(row, "ORG_NAME"),
-                text(row, "USE_TRGT"), text(row, "USE_FEE"), text(row, "INQUIRY"),
-                text(row, "PLAYER"), text(row, "PROGRAM"), text(row, "ETC_DESC"),
-                text(row, "ORG_LINK"), text(row, "MAIN_IMG"), text(row, "RGSTDATE"),
-                text(row, "TICKET"), text(row, "STRTDATE"), text(row, "END_DATE"),
-                text(row, "THEMECODE"), decimal(row, "LOT"), decimal(row, "LAT"),
-                text(row, "IS_FREE"), text(row, "HMPG_ADDR"), text(row, "PRO_TIME"), row.toString()
+                cultcode(detailUrl),
+                detailUrl,
+                text(row, "TITLE"),
+                text(row, "CODENAME"),
+                text(row, "THEMECODE"),
+                text(row, "GUNAME"),
+                text(row, "PLACE"),
+                text(row, "ORG_NAME"),
+                text(row, "ORG_LINK"),
+                date(row, "STRTDATE"),
+                date(row, "END_DATE"),
+                text(row, "PRO_TIME"),
+                date(row, "RGSTDATE"),
+                text(row, "USE_TRGT"),
+                text(row, "USE_FEE"),
+                isFree(row),
+                text(row, "TICKET"),
+                text(row, "INQUIRY"),
+                text(row, "PLAYER"),
+                text(row, "PROGRAM"),
+                text(row, "ETC_DESC"),
+                text(row, "MAIN_IMG"),
+                decimal(row, "LAT"),
+                decimal(row, "LOT")
         );
+    }
+
+    /** The detail URL carries the only stable event id the dataset exposes. */
+    private long cultcode(String detailUrl) {
+        Matcher matcher = detailUrl == null ? null : CULTCODE.matcher(detailUrl);
+        if (matcher == null || !matcher.find()) {
+            throw new IllegalStateException("Seoul Open API row has no cultcode in HMPG_ADDR: " + detailUrl);
+        }
+        return Long.parseLong(matcher.group(1));
+    }
+
+    private Boolean isFree(JsonNode row) {
+        return switch (String.valueOf(text(row, "IS_FREE"))) {
+            case "무료" -> Boolean.TRUE;
+            case "유료" -> Boolean.FALSE;
+            default -> null;
+        };
+    }
+
+    private LocalDate date(JsonNode row, String field) {
+        String value = text(row, field);
+        if (value == null || value.length() < 10) {
+            return null;
+        }
+        try {
+            return LocalDate.parse(value.substring(0, 10));
+        } catch (DateTimeParseException ignored) {
+            return null;
+        }
     }
 
     private String text(JsonNode row, String field) {

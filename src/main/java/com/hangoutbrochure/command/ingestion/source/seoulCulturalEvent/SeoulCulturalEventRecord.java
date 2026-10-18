@@ -1,33 +1,33 @@
 package com.hangoutbrochure.command.ingestion.source.seoulCulturalEvent;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
-/** A normalized representation of one row from Seoul's cultural event API. */
+/** One row of Seoul's cultural event API, mapped onto the names this project uses. */
 public record SeoulCulturalEventRecord(
-        String category,
-        String district,
+        long cultcode,
+        String detailUrl,
         String title,
-        String period,
+        String sourceCategory,
+        String sourceTheme,
+        String district,
         String place,
-        String organization,
-        String audience,
-        String fee,
-        String inquiry,
-        String performers,
-        String program,
-        String description,
-        String homepageUrl,
-        String imageUrl,
-        String applicationDate,
+        String organizer,
+        String organizerUrl,
+        LocalDate startDate,
+        LocalDate endDate,
+        String eventTimeDesc,
+        LocalDate registerDate,
+        String targetAudience,
+        String feeDesc,
+        Boolean isFree,
         String ticketType,
-        String startsOn,
-        String endsOn,
-        String theme,
-        BigDecimal longitude,
+        String contact,
+        String performers,
+        String programDesc,
+        String etcDesc,
+        String imageUrl,
         BigDecimal latitude,
-        String freeOrPaid,
-        String sourceUrl,
-        String eventTime,
-        String rawPayload
+        BigDecimal longitude
 ) {
 }

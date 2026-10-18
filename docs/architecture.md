@@ -99,7 +99,7 @@ ingestion.persistence      # 원문/후보/체크포인트 저장 (추가 시)
 
 cron이 Spring 애플리케이션 안에서 계속 돌도록 하기보다, 초기에 **한 번 실행 후 종료하는 명령**을 만들고 OS cron이나 컨테이너 스케줄러가 정해진 주기에 호출하는 편이 운영과 재시도에 편하다. API 서버와 수집 작업도 각각 따로 실행할 수 있다. 출처 어댑터는 수집 로직만 맡고, command는 설정을 읽어 수집 흐름을 시작하는 역할을 한다.
 
-서울시 문화행사 데이터는 [서울시 문화행사 정보](https://data.seoul.go.kr/dataList/OA-23041/S/1/datasetView.do)의 항목을 `ingestion_raw_seoul_cultural_hangouts`에 저장한다. API 응답 필드와 원본 JSON을 함께 보존하며, `ingestion_sources`에는 `seoul-cultural-events` 출처를 등록한다. `command.ingestion.IngestCommand`가 `--source` 이름에 맞는 `IngestionSource`를 선택하고, 서울 문화행사 수집 구현은 `command.ingestion.source.seoulCulturalEvent` 패키지에 둔다. `(source_name, external_id)` 고유 키로 재수집을 멱등하게 처리하며, 실행 결과는 `ingestion_runs`에 기록한다. 수집 원문은 아직 후보 검증 후 공개 행아웃으로 승격하지 않는다.
+서울시 문화행사 데이터는 [서울시 문화행사 정보](https://data.seoul.go.kr/dataList/OA-23041/S/1/datasetView.do)의 항목을 `ingestion_raw_seoul_cultural_hangouts`에 저장한다. API 응답 필드를 프로젝트 이름으로 매핑해 보존하며, `ingestion_sources`에는 `seoul-cultural-events` 출처를 등록한다. `command.ingestion.IngestCommand`가 `--source` 이름에 맞는 `IngestionSource`를 선택하고, 서울 문화행사 수집 구현은 `command.ingestion.source.seoulCulturalEvent` 패키지에 둔다. `cultcode` 고유 키로 재수집을 멱등하게 처리하며, 실행 결과는 `ingestion_runs`에 기록한다. 수집 원문은 아직 후보 검증 후 공개 행아웃으로 승격하지 않는다.
 
 현재 명령은 `SEOUL_OPEN_API_KEY`를 `.env.local`에 둔 상태에서 다음처럼 실행한다. 설정 계층은 [README](../README.md#configuration)를 참고한다.
 
@@ -140,7 +140,7 @@ cron이 Spring 애플리케이션 안에서 계속 돌도록 하기보다, 초�
 
 수집과 AI 처리는 진행 상태를 분리한다.
 
-1. 출처에서 발견한 원문을 `ingestion_raw_seoul_cultural_hangouts` 등 출처별 원문 테이블에 먼저 저장한다. `(source_name, external_id)`에 고유 제약을 두어 같은 항목이 반복 발견돼도 중복 저장되지 않게 한다.
+1. 출처에서 발견한 원문을 `ingestion_raw_seoul_cultural_hangouts` 등 출처별 원문 테이블에 먼저 저장한다. 출처가 제공하는 안정적인 고유 ID(서울 문화행사는 `cultcode`)에 고유 제약을 두어 같은 항목이 반복 발견돼도 중복 저장되지 않게 한다.
 2. 원문 저장이 성공한 뒤 출처 체크포인트를 갱신한다. 이렇게 하면 AI 처리에 실패해도 다음 실행에서 원문을 잃지 않는다.
 3. Worker는 아직 처리되지 않았거나 원문 해시가 바뀐 문서를 AI 추출 대상으로 가져온다. 실패한 문서는 재시도하고 성공·검토 대기·실패 상태를 기록한다.
 4. 같은 원문과 같은 추출기 버전으로 이미 처리한 문서는 건너뛴다. 프롬프트나 추출 스키마를 바꾸어 재추출할 때는 추출기 버전을 바꾸어 대상 문서를 다시 처리할 수 있게 한다.
@@ -164,7 +164,7 @@ AI 결과는 구조화된 후보로 저장하고 곧바로 공개 API에 노출�
 
 - 내부 카테고리 코드(`music`, `sport` 등)로 매핑하고, 출처의 분류명은 그대로 내부 카테고리로 사용하지 않는다.
 - 한국 출처에서 시간대가 생략된 일시는 `Asia/Seoul` 기준으로 해석한다. 시간대가 명시된 값은 해당 offset을 존중하고, DB에는 시점을 보존한다.
-- 출처의 외부 ID, 정규화한 URL, 행사명·일시·장소 조합을 이용해 중복 후보를 찾는다.
+- 출처의 외부 ID와 행사명·일시·장소·주최 조합을 이용해 중복 후보를 찾는다. 서울 문화행사는 `cultcode`가 고유하지만 같은 행사가 다른 `cultcode`로 두 번 등재되는 경우가 있어, `content_hash`로 묶어 정본을 고른다.
 - 같은 행사가 여러 출처에서 발견되면 출처 링크를 모두 보존하고, 최신 정보와 신뢰도에 따라 정본을 갱신한다.
 - 수집 재시도에도 중복 행이 만들어지지 않도록 수집 반영은 멱등하게 설계한다.
 
@@ -178,24 +178,50 @@ AI 결과는 구조화된 후보로 저장하고 곧바로 공개 API에 노출�
 | --- | --- |
 | `ingestion_sources` | 수집 출처 이름, 종류, 표시명, 기본 URL, 활성화 여부와 마지막 성공 시각 관리 |
 | `ingestion_runs` | 실행 시작·종료, 성공/실패, 조회·저장 건수와 오류 기록 |
-| `ingestion_raw_seoul_cultural_hangouts` | 서울 문화행사 데이터셋의 모든 행사 필드와 원본 JSON, 출처 URL·외부 ID, 내용 해시, 확인 시각 및 처리 상태 보관 |
+| `ingestion_raw_seoul_cultural_hangouts` | 서울 문화행사 데이터셋의 행사 필드, 고유 ID(`cultcode`)와 상세 URL, 내용 해시, 확인 시각 및 처리 상태 보관 |
 
-`ingestion_raw_seoul_cultural_hangouts`는 데이터셋의 행사 필드를 다음처럼 저장한다. `raw_payload`에도 API의 원본 행 전체를 보존한다.
+`ingestion_raw_seoul_cultural_hangouts`는 데이터셋의 행사 필드를 다음처럼 저장한다.
 
-| 서울 API 필드 | 저장 컬럼 | 서울 API 필드 | 저장 컬럼 |
+| 서울 API 필드 | 저장 컬럼 | 타입 | 비고 |
 | --- | --- | --- | --- |
-| `CODENAME` | `category` | `GUNAME` | `district` |
-| `TITLE` | `title` | `DATE` | `event_date` |
-| `PLACE` | `place` | `ORG_NAME` | `organization` |
-| `USE_TRGT` | `target_audience` | `USE_FEE` | `fee` |
-| `INQUIRY` | `inquiry` | `PLAYER` | `performers` |
-| `PROGRAM` | `program` | `ETC_DESC` | `additional_info` |
-| `ORG_LINK` | `homepage_url` | `MAIN_IMG` | `image_url` |
-| `RGSTDATE` | `application_date` | `TICKET` | `ticket_type` |
-| `STRTDATE` | `starts_on` | `END_DATE` | `ends_on` |
-| `THEMECODE` | `theme` | `LOT` | `longitude` |
-| `LAT` | `latitude` | `IS_FREE` | `free_or_paid` |
-| `HMPG_ADDR` | `detail_url` | `PRO_TIME` | `event_time` |
+| `HMPG_ADDR` | `cultcode`, `detail_url` | `bigint`, `text` | URL에서 `cultcode=(\d+)`를 뽑아 고유 키로 쓰고, URL 자체도 보존한다 |
+| `TITLE` | `title` | `text` | |
+| `CODENAME` | `source_category` | `text` | 서울시 분류 17종. 내부 `hangout_categories`와 다름 |
+| `THEMECODE` | `source_theme` | `text` | 서울시 테마 6종 |
+| `GUNAME` | `district` | `text` | |
+| `PLACE` | `place` | `text` | 대부분 공연장 이름, 일부만 주소 형태 |
+| `ORG_NAME` | `organizer` | `text` | |
+| `ORG_LINK` | `organizer_url` | `text` | |
+| `STRTDATE` | `start_date` | `date` | 원본은 `2022-08-11 00:00:00.0`인데 시각이 전건 `00:00:00`이라 날짜만 보관한다 |
+| `END_DATE` | `end_date` | `date` | 같음. 종료일이 시작일보다 이른 행이 존재하므로 raw에는 제약을 두지 않는다 |
+| `PRO_TIME` | `event_time_desc` | `text` | `19:30`·`오후 7시 30분`·`홈페이지 참고`가 섞인 자유 텍스트라 파싱하지 않는다 |
+| `RGSTDATE` | `register_date` | `date` | |
+| `USE_TRGT` | `target_audience` | `text` | |
+| `USE_FEE` | `fee_desc` | `text` | `전석 20,000원` 같은 자유 텍스트 |
+| `IS_FREE` | `is_free` | `boolean` | `무료`/`유료`를 불리언으로 변환, 그 외는 NULL |
+| `TICKET` | `ticket_type` | `text` | `기관`/`시민` 두 값 |
+| `INQUIRY` | `contact` | `text` | |
+| `PLAYER` | `performers` | `text` | |
+| `PROGRAM` | `program_desc` | `text` | |
+| `ETC_DESC` | `etc_desc` | `text` | |
+| `MAIN_IMG` | `image_url` | `text` | |
+| `LAT` | `latitude` | `numeric(11,8)` | 파싱 실패 시 NULL |
+| `LOT` | `longitude` | `numeric(12,8)` | 파싱 실패 시 NULL |
+
+`DATE` 필드는 `STRTDATE`·`END_DATE`에서 그대로 복원되므로 저장하지 않는다. API 응답 원문(`raw_payload`)도 보관하지 않는다.
+
+수집이 더하는 관리 필드는 다음과 같다.
+
+| 컬럼 | 값 | 의미 |
+| --- | --- | --- |
+| `id` | `uuidv7()` | 행 PK |
+| `source_name` | 상수 `seoul-cultural-events` | `ingestion_sources` FK |
+| `content_hash` | `title`·`place`·`organizer`·`start_date`·`end_date`를 고정 순서로 이어 붙인 SHA-256 | 행사 자체를 식별한다. 출처가 같은 행사를 다른 `cultcode`로 두 번 등재한 경우를 찾기 위한 값이므로, 그런 쌍에서 값이 흔들리는 `district`·`event_time_desc`·`performers`·`image_url`은 일부러 제외한다. 해시 전에 연속 공백을 하나로 접는다. 중복이 존재하는 게 정상이라 인덱스는 UNIQUE가 아니다 |
+| `processing_status` | 기본값 `PENDING` | 정제 진행 상태 |
+| `first_seen_at` | INSERT 시 1회 | 처음 발견 시각. 재수집 시 갱신하지 않는다 |
+| `last_seen_at` | 재수집마다 갱신 | 마지막으로 다시 본 시각 |
+
+`cultcode`에 UNIQUE 제약을 두어 재수집이 멱등하게 동작하고, 그 제약이 조회용 인덱스도 함께 제공한다.
 
 다음 단계에서는 `hangout_candidates`로 추출·정규화한 후보와 검토 상태를 관리하고, `hangout_source_references`로 게시된 행아웃의 출처를 연결할 수 있다. 현재 API는 수집 원문이나 후보를 공개하지 않는다.
 

@@ -28,56 +28,64 @@ public class SeoulCulturalEventPersistence {
     }
 
     public void saveDocument(String sourceName, SeoulCulturalEventRecord event) {
-        String externalId = event.sourceUrl() == null || event.sourceUrl().isBlank()
-                ? sha256(String.join("|", nullToEmpty(event.title()), nullToEmpty(event.period()),
-                nullToEmpty(event.place()), nullToEmpty(event.organization())))
-                : event.sourceUrl().trim();
-
         jdbcTemplate.update("""
                 INSERT INTO ingestion_raw_seoul_cultural_hangouts (
-                    source_name, external_id, source_url, category, district, title, event_date,
-                    place, organization, target_audience, fee, inquiry, performers, program,
-                    additional_info, homepage_url, image_url, application_date, ticket_type,
-                    starts_on, ends_on, theme, longitude, latitude, free_or_paid, detail_url,
-                    event_time, raw_payload, payload_hash
+                    source_name, cultcode, detail_url, content_hash,
+                    title, source_category, source_theme, district, place, organizer, organizer_url,
+                    start_date, end_date, event_time_desc, register_date, target_audience, fee_desc,
+                    is_free, ticket_type, contact, performers, program_desc, etc_desc, image_url,
+                    latitude, longitude
                 )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?::numeric, ?::numeric, ?, ?, ?, ?::jsonb, ?)
-                ON CONFLICT (source_name, external_id) DO UPDATE SET
-                    source_url = EXCLUDED.source_url,
-                    category = EXCLUDED.category,
-                    district = EXCLUDED.district,
-                    title = EXCLUDED.title,
-                    event_date = EXCLUDED.event_date,
-                    place = EXCLUDED.place,
-                    organization = EXCLUDED.organization,
-                    target_audience = EXCLUDED.target_audience,
-                    fee = EXCLUDED.fee,
-                    inquiry = EXCLUDED.inquiry,
-                    performers = EXCLUDED.performers,
-                    program = EXCLUDED.program,
-                    additional_info = EXCLUDED.additional_info,
-                    homepage_url = EXCLUDED.homepage_url,
-                    image_url = EXCLUDED.image_url,
-                    application_date = EXCLUDED.application_date,
-                    ticket_type = EXCLUDED.ticket_type,
-                    starts_on = EXCLUDED.starts_on,
-                    ends_on = EXCLUDED.ends_on,
-                    theme = EXCLUDED.theme,
-                    longitude = EXCLUDED.longitude,
-                    latitude = EXCLUDED.latitude,
-                    free_or_paid = EXCLUDED.free_or_paid,
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?::numeric, ?::numeric)
+                ON CONFLICT (cultcode) DO UPDATE SET
                     detail_url = EXCLUDED.detail_url,
-                    event_time = EXCLUDED.event_time,
-                    raw_payload = EXCLUDED.raw_payload,
-                    payload_hash = EXCLUDED.payload_hash,
+                    content_hash = EXCLUDED.content_hash,
+                    title = EXCLUDED.title,
+                    source_category = EXCLUDED.source_category,
+                    source_theme = EXCLUDED.source_theme,
+                    district = EXCLUDED.district,
+                    place = EXCLUDED.place,
+                    organizer = EXCLUDED.organizer,
+                    organizer_url = EXCLUDED.organizer_url,
+                    start_date = EXCLUDED.start_date,
+                    end_date = EXCLUDED.end_date,
+                    event_time_desc = EXCLUDED.event_time_desc,
+                    register_date = EXCLUDED.register_date,
+                    target_audience = EXCLUDED.target_audience,
+                    fee_desc = EXCLUDED.fee_desc,
+                    is_free = EXCLUDED.is_free,
+                    ticket_type = EXCLUDED.ticket_type,
+                    contact = EXCLUDED.contact,
+                    performers = EXCLUDED.performers,
+                    program_desc = EXCLUDED.program_desc,
+                    etc_desc = EXCLUDED.etc_desc,
+                    image_url = EXCLUDED.image_url,
+                    latitude = EXCLUDED.latitude,
+                    longitude = EXCLUDED.longitude,
                     last_seen_at = CURRENT_TIMESTAMP
-                """, sourceName, externalId, event.sourceUrl(), event.category(), event.district(), event.title(),
-                event.period(), event.place(), event.organization(), event.audience(), event.fee(), event.inquiry(),
-                event.performers(), event.program(), event.description(), event.homepageUrl(), event.imageUrl(),
-                event.applicationDate(), event.ticketType(), event.startsOn(), event.endsOn(), event.theme(),
-                event.longitude() == null ? null : event.longitude().toPlainString(),
-                event.latitude() == null ? null : event.latitude().toPlainString(), event.freeOrPaid(),
-                event.sourceUrl(), event.eventTime(), event.rawPayload(), sha256(event.rawPayload()));
+                """, sourceName, event.cultcode(), event.detailUrl(), contentHash(event),
+                event.title(), event.sourceCategory(), event.sourceTheme(), event.district(),
+                event.place(), event.organizer(), event.organizerUrl(), event.startDate(),
+                event.endDate(), event.eventTimeDesc(), event.registerDate(), event.targetAudience(),
+                event.feeDesc(), event.isFree(), event.ticketType(), event.contact(),
+                event.performers(), event.programDesc(), event.etcDesc(), event.imageUrl(),
+                event.latitude() == null ? null : event.latitude().toPlainString(),
+                event.longitude() == null ? null : event.longitude().toPlainString());
+    }
+
+    /**
+     * Identifies the event itself, so two rows the source registered under different cultcodes
+     * hash alike. Fields that drift between such rows, such as district or image_url, are left out.
+     */
+    private String contentHash(SeoulCulturalEventRecord e) {
+        return sha256(String.join("|",
+                normalize(e.title()), normalize(e.place()), normalize(e.organizer()),
+                String.valueOf(e.startDate()), String.valueOf(e.endDate())));
+    }
+
+    /** Collapses runs of whitespace so that spacing alone never splits two equal events. */
+    private String normalize(String value) {
+        return value == null ? "" : value.trim().replaceAll("\\s+", " ");
     }
 
     public void completeRun(UUID runId, int fetchedCount, int storedCount) {
@@ -109,10 +117,6 @@ public class SeoulCulturalEventPersistence {
         } catch (NoSuchAlgorithmException e) {
             throw new IllegalStateException("SHA-256 is not available.", e);
         }
-    }
-
-    private String nullToEmpty(String value) {
-        return value == null ? "" : value;
     }
 
     private String truncate(String value, int maxLength) {
