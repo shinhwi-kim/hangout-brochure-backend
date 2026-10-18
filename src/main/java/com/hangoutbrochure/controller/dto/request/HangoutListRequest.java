@@ -6,19 +6,19 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.format.annotation.DateTimeFormat;
 
-import java.time.OffsetDateTime;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
 @ValidHangoutListRequest
 public record HangoutListRequest(
         @NotNull
-        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
-        OffsetDateTime from,
+        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        LocalDate from,
 
         @NotNull
-        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
-        OffsetDateTime to,
+        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        LocalDate to,
 
         List<String> categories,
         UUID cursor,

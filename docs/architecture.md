@@ -172,6 +172,33 @@ AI 결과는 구조화된 후보로 저장하고 곧바로 공개 API에 노출�
 
 현재 PostgreSQL에는 공개 조회에 사용하는 `hangouts`, `hangout_categories`, `hangout_category_assignments`가 있다. 수집 기능을 추가할 때는 공개용 데이터와 수집 중간 데이터를 구분한다.
 
+### `hangouts` 필드
+
+공개 API가 그대로 내보내는 테이블이다. 수집 원문(raw)과 달리 **정제를 통과한 값만** 들어오며, 출처가 주지 않은 값은 NULL로 둔다. 거짓 값을 채워 넣지 않는다.
+
+| 컬럼 | 의미 |
+| --- | --- |
+| `id` | 행아웃 PK (`uuidv7`) |
+| `source_name` | 어느 출처에서 왔는지. `ingestion_sources` FK. 수집으로 들어오지 않은 행도 출처를 밝힌다 — 로컬 샘플은 `mock-data`라는 `seed` 출처를 쓰며, 수집 대상이 아니므로 `enabled = false`다 |
+| `source_raw_id` | 원본 raw 행의 UUID. **정제의 멱등 키**로, UNIQUE라 같은 원문이 두 번 승격되지 않는다. raw가 없는 행(샘플·수동 등록)은 NULL이며 Postgres는 NULL끼리 충돌시키지 않는다 |
+| `detail_url` | 출처의 상세 페이지 링크. 목록에서 원문으로 넘어가는 용도 |
+| `title` | 행사명 |
+| `location_name` | 장소명. 서울 문화행사는 raw `place`에서 온다 |
+| `address` | 도로명 주소. 서울 문화행사에는 주소 필드가 없어 대부분 NULL이다 |
+| `district` | 자치구. 지역 필터의 축 |
+| `latitude`, `longitude` | 좌표. 지도 마커의 위치라 **NOT NULL이며, 좌표가 없는 원문은 정제에서 제외**한다 |
+| `start_date`, `end_date` | 행사 기간. **날짜 단위다.** 출처가 날짜만 주므로 시각을 지어내지 않는다 |
+| `event_time_desc` | `19:30`·`프로그램별 상이`처럼 날짜로 표현되지 않는 시간 정보. 자유 텍스트이며 **표시 전용으로 파싱하지 않는다** |
+| `organizer` | 주최·주관 기관 |
+| `image_url` | 대표 이미지 |
+| `is_free` | 무료 여부. 불명확하면 NULL |
+| `fee_desc` | `전석 20,000원` 같은 요금 문자열 |
+| `contact` | 문의처 |
+| `status` | `PUBLISHED` / `REVIEW` / `HIDDEN`. 날짜가 역전되는 등 품질이 의심스러운 행을 지우지 않고 숨겨둘 수 있다. 목록 API는 `PUBLISHED`만 반환한다 |
+| `created_at`, `updated_at` | 생성·갱신 시각. 재정제로 내용이 바뀌면 `updated_at`이 움직인다 |
+
+시간을 `timestamptz` 대신 `date`로 두는 이유는, 서울 문화행사 원문의 시각이 전건 `00:00:00`이라 `timestamptz`가 **없는 정밀도를 있는 것처럼 표현**하기 때문이다. 하루짜리 행사가 길이 0인 구간이 되어 기간 겹침 필터에 걸리지 않는 문제도 함께 사라진다.
+
 현재 추가된 수집 테이블:
 
 | 테이블 | 책임 |

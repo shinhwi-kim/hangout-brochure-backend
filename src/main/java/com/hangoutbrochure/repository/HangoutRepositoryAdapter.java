@@ -76,12 +76,20 @@ public class HangoutRepositoryAdapter implements HangoutRepository {
                 entity.getId(),
                 entity.getTitle(),
                 entity.getCategories().stream().map(HangoutCategoryEntity::getCode).sorted().toList(),
-                entity.getStartsAt(),
-                entity.getEndsAt(),
+                entity.getStartDate(),
+                entity.getEndDate(),
+                entity.getEventTimeDesc(),
                 entity.getLocationName(),
                 entity.getAddress(),
+                entity.getDistrict(),
                 entity.getLatitude(),
-                entity.getLongitude()
+                entity.getLongitude(),
+                entity.getOrganizer(),
+                entity.getImageUrl(),
+                entity.getDetailUrl(),
+                entity.getIsFree(),
+                entity.getFeeDesc(),
+                entity.getContact()
         );
     }
 }

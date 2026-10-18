@@ -49,14 +49,14 @@ The default local connection is `localhost:5432`, database `hangout_brochure`, u
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
 | `categories` | string list | no | Filter by one or more stable category codes, such as `music` and `sport`; repeat the parameter for each code |
-| `from` | ISO 8601 datetime | yes | Start of the required time window; include hangouts that continue until or beyond this time |
-| `to` | ISO 8601 datetime | yes | End of the required time window; include hangouts that begin by this time |
+| `from` | ISO 8601 date (`YYYY-MM-DD`) | yes | Start of the required window; include hangouts that run until or beyond this day |
+| `to` | ISO 8601 date (`YYYY-MM-DD`) | yes | End of the required window; include hangouts that begin by this day |
 | `cursor` | UUID | no | `nextCursor` returned by the previous response |
 | `size` | integer | no | Items per response (default `300`, maximum `500`) |
 
-When multiple categories are supplied, a hangout is included if it has any of them. The required time filter matches hangouts whose duration overlaps the requested window: `hangout.startsAt <= to` and `hangout.endsAt >= from`. Results are ordered by `id` ascending. Pass the returned hangout ID in `nextCursor` to fetch the next batch; it is `null` when there are no more results.
+When multiple categories are supplied, a hangout is included if it has any of them. The required date filter matches hangouts whose run overlaps the requested window: `hangout.startDate <= to` and `hangout.endDate >= from`. Only hangouts with status `PUBLISHED` are returned. Results are ordered by `id` ascending. Pass the returned hangout ID in `nextCursor` to fetch the next batch; it is `null` when there are no more results.
 
-Example: `/api/hangouts?categories=music&categories=sport&from=2026-11-01T00:00:00Z&to=2026-11-30T23:59:59Z&size=20`
+Example: `/api/hangouts?categories=music&categories=sport&from=2026-11-01&to=2026-11-30&size=20`
 
 Response shape:
 
@@ -67,12 +67,20 @@ Response shape:
       "id": "hangout-123",
       "title": "Neighborhood music day",
       "categories": ["music", "sport"],
-      "startsAt": "2026-11-02T10:00:00+09:00",
-      "endsAt": "2026-11-02T18:00:00+09:00",
+      "startDate": "2026-11-02",
+      "endDate": "2026-11-02",
+      "eventTimeDesc": "10:00 ~ 18:00",
       "locationName": "Hangang Park",
       "address": "Seoul ...",
+      "district": "Yeongdeungpo-gu",
       "latitude": 37.528,
-      "longitude": 126.934
+      "longitude": 126.934,
+      "organizer": "Seoul Foundation for Arts and Culture",
+      "imageUrl": "https://.../poster.jpg",
+      "detailUrl": "https://culture.seoul.go.kr/...",
+      "isFree": true,
+      "feeDesc": null,
+      "contact": "02-000-0000"
     }
   ],
   "size": 20,
@@ -80,6 +88,8 @@ Response shape:
   "hasNext": true
 }
 ```
+
+A hangout carries a day range, never a clock time: sources publish days, and anything finer such as `19:30` or "programme varies" arrives as free text in `eventTimeDesc`, which is for display only. Fields the source did not supply come back as `null`.
 
 Invalid requests return `400 Bad Request` with a consistent error body:
 

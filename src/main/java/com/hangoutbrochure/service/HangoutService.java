@@ -6,7 +6,7 @@ import com.hangoutbrochure.repository.HangoutRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.OffsetDateTime;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -24,8 +24,8 @@ public class HangoutService {
     @Transactional(readOnly = true)
     public HangoutListResult getHangouts(
             List<String> categories,
-            OffsetDateTime from,
-            OffsetDateTime to,
+            LocalDate from,
+            LocalDate to,
             int size,
             UUID cursorId
     ) {

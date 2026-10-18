@@ -6,16 +6,37 @@ CREATE TABLE hangout_categories (
 
 CREATE TABLE hangouts (
     id UUID PRIMARY KEY DEFAULT uuidv7(),
+
+    -- Where this hangout came from. Both stay NULL for manually created rows;
+    -- for ingested rows source_raw_id is the idempotency key of the refinement step.
+    source_name VARCHAR(100),
+    source_raw_id UUID UNIQUE,
+    detail_url TEXT,
+
     title VARCHAR(200) NOT NULL,
-    description TEXT NOT NULL,
     location_name VARCHAR(200) NOT NULL,
-    address VARCHAR(500) NOT NULL,
+    address VARCHAR(500),
+    district VARCHAR(50),
     latitude DOUBLE PRECISION NOT NULL CHECK (latitude BETWEEN -90 AND 90),
     longitude DOUBLE PRECISION NOT NULL CHECK (longitude BETWEEN -180 AND 180),
-    starts_at TIMESTAMPTZ NOT NULL,
-    ends_at TIMESTAMPTZ NOT NULL,
+
+    -- Sources publish days, not instants. Anything finer than a day, such as
+    -- "19:30" or "programme varies", is display-only text we never parse.
+    start_date DATE NOT NULL,
+    end_date DATE NOT NULL,
+    event_time_desc TEXT,
+
+    organizer VARCHAR(200),
+    image_url TEXT,
+    is_free BOOLEAN,
+    fee_desc TEXT,
+    contact VARCHAR(200),
+
+    status VARCHAR(20) NOT NULL DEFAULT 'PUBLISHED'
+        CHECK (status IN ('PUBLISHED', 'REVIEW', 'HIDDEN')),
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT hangouts_valid_time_range CHECK (ends_at >= starts_at)
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT hangouts_valid_date_range CHECK (end_date >= start_date)
 );
 
 CREATE TABLE hangout_category_assignments (
@@ -24,7 +45,7 @@ CREATE TABLE hangout_category_assignments (
     PRIMARY KEY (hangout_id, category_id)
 );
 
-CREATE INDEX idx_hangouts_starts_at_id ON hangouts (starts_at, id);
+CREATE INDEX idx_hangouts_start_date_id ON hangouts (start_date, id);
 CREATE INDEX idx_hangout_category_assignments_category_hangout
     ON hangout_category_assignments (category_id, hangout_id);
 
@@ -105,6 +126,10 @@ CREATE INDEX IF NOT EXISTS idx_ingestion_raw_seoul_cultural_hangouts_processing
 -- Not unique on purpose: the source registers the same event under more than one cultcode.
 CREATE INDEX IF NOT EXISTS idx_ingestion_raw_seoul_cultural_hangouts_content_hash
     ON ingestion_raw_seoul_cultural_hangouts (content_hash);
+
+ALTER TABLE hangouts
+    ADD CONSTRAINT hangouts_source_name_fkey
+    FOREIGN KEY (source_name) REFERENCES ingestion_sources (source_name);
 
 INSERT INTO ingestion_sources (source_name, source_type, display_name, base_url)
 VALUES (

@@ -76,12 +76,20 @@ public class HangoutBrochureController {
                 hangout.id().toString(),
                 hangout.title(),
                 hangout.categories(),
-                hangout.startsAt(),
-                hangout.endsAt(),
+                hangout.startDate(),
+                hangout.endDate(),
+                hangout.eventTimeDesc(),
                 hangout.locationName(),
                 hangout.address(),
+                hangout.district(),
                 hangout.latitude(),
-                hangout.longitude()
+                hangout.longitude(),
+                hangout.organizer(),
+                hangout.imageUrl(),
+                hangout.detailUrl(),
+                hangout.isFree(),
+                hangout.feeDesc(),
+                hangout.contact()
         );
     }
 

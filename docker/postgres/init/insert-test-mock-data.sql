@@ -1,6 +1,12 @@
 -- Local development sample hangouts.
 -- Generate a fresh mix of past, ongoing, soon-to-start, and future hangouts
 -- whenever a new local database volume is initialized.
+
+-- These rows are not ingested from anywhere, but they still name their origin so that
+-- every hangout can be traced back to one. Disabled so no ingestion run ever picks it up.
+INSERT INTO ingestion_sources (source_name, source_type, display_name, base_url, enabled)
+VALUES ('mock-data', 'seed', '로컬 샘플 데이터', 'local://mock-data', FALSE);
+
 CREATE TEMP TABLE _seed_hangout_ids (
     sample_number INT PRIMARY KEY,
     hangout_id UUID NOT NULL
@@ -39,9 +45,10 @@ sample_hangouts AS (
     JOIN hangout_categories AS category ON category.id = ((series.i - 1) % 8) + 1
     JOIN sample_locations AS location ON location.location_number = ((series.i * 7 - 1) % 12) + 1
 )
-INSERT INTO hangouts (id, title, description, location_name, address, latitude, longitude, starts_at, ends_at)
+INSERT INTO hangouts (id, source_name, title, location_name, address, latitude, longitude, start_date, end_date, event_time_desc)
 SELECT
     sample_hangouts.hangout_id,
+    'mock-data',
     CASE series.i
         WHEN 1 THEN '한강 재즈 피크닉'
         WHEN 2 THEN '성수 주말 브런치 모임'
@@ -55,13 +62,13 @@ SELECT
         WHEN 10 THEN '시장 먹거리 산책'
         ELSE sample_hangouts.category_name || ' 행아웃 #' || lpad(series.i::text, 3, '0')
     END,
-    '로컬 개발 확인을 위한 샘플 행아웃입니다. 일정과 장소는 예시 데이터입니다.',
     sample_hangouts.location_name,
     sample_hangouts.address,
     sample_hangouts.latitude,
     sample_hangouts.longitude,
-    schedule.starts_at,
-    schedule.ends_at
+    schedule.starts_at::date,
+    schedule.ends_at::date,
+    '14:00 ~ 18:00'
 FROM generate_series(1, 100) AS series(i)
 JOIN sample_hangouts ON sample_hangouts.i = series.i
 CROSS JOIN LATERAL (
