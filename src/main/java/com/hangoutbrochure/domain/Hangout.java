@@ -17,10 +17,15 @@ public record Hangout(
         double latitude,
         double longitude,
         String organizer,
+        String organizerUrl,
         String imageUrl,
         String detailUrl,
         Boolean isFree,
         String feeDesc,
-        String contact
+        String contact,
+        String targetAudience,
+        String programDesc,
+        String performers,
+        String etcDesc
 ) {
 }

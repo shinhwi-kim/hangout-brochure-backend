@@ -85,11 +85,16 @@ public class HangoutBrochureController {
                 hangout.latitude(),
                 hangout.longitude(),
                 hangout.organizer(),
+                hangout.organizerUrl(),
                 hangout.imageUrl(),
                 hangout.detailUrl(),
                 hangout.isFree(),
                 hangout.feeDesc(),
-                hangout.contact()
+                hangout.contact(),
+                hangout.targetAudience(),
+                hangout.programDesc(),
+                hangout.performers(),
+                hangout.etcDesc()
         );
     }
 

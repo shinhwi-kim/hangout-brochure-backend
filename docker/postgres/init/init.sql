@@ -27,10 +27,15 @@ CREATE TABLE hangouts (
     event_time_desc TEXT,
 
     organizer VARCHAR(200),
+    organizer_url TEXT,
     image_url TEXT,
     is_free BOOLEAN,
     fee_desc TEXT,
     contact VARCHAR(200),
+    target_audience VARCHAR(200),
+    program_desc TEXT,
+    performers TEXT,
+    etc_desc TEXT,
 
     status VARCHAR(20) NOT NULL DEFAULT 'PUBLISHED'
         CHECK (status IN ('PUBLISHED', 'REVIEW', 'HIDDEN')),

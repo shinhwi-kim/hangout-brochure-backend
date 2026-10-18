@@ -85,11 +85,16 @@ public class HangoutRepositoryAdapter implements HangoutRepository {
                 entity.getLatitude(),
                 entity.getLongitude(),
                 entity.getOrganizer(),
+                entity.getOrganizerUrl(),
                 entity.getImageUrl(),
                 entity.getDetailUrl(),
                 entity.getIsFree(),
                 entity.getFeeDesc(),
-                entity.getContact()
+                entity.getContact(),
+                entity.getTargetAudience(),
+                entity.getProgramDesc(),
+                entity.getPerformers(),
+                entity.getEtcDesc()
         );
     }
 }

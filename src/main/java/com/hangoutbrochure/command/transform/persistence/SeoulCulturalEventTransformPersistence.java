@@ -33,12 +33,14 @@ public class SeoulCulturalEventTransformPersistence {
                 INSERT INTO hangouts (
                     source_name, source_raw_id, detail_url, title, location_name, district,
                     latitude, longitude, start_date, end_date, event_time_desc,
-                    organizer, image_url, is_free, fee_desc, contact
+                    organizer, organizer_url, image_url, is_free, fee_desc, contact,
+                    target_audience, program_desc, performers, etc_desc
                 )
                 SELECT c.source_name, c.id, c.detail_url, left(c.title, 200), left(c.place, 200),
                        left(c.district, 50), c.latitude, c.longitude, c.start_date, c.end_date,
-                       c.event_time_desc, left(nullif(c.organizer, '기타'), 200), c.image_url,
-                       c.is_free, c.fee_desc, left(c.contact, 200)
+                       c.event_time_desc, left(nullif(c.organizer, '기타'), 200), c.organizer_url,
+                       c.image_url, c.is_free, c.fee_desc, left(c.contact, 200),
+                       left(c.target_audience, 200), c.program_desc, c.performers, c.etc_desc
                 FROM canonical c
                 WHERE c.latitude IS NOT NULL AND c.longitude IS NOT NULL
                   AND c.start_date IS NOT NULL AND c.end_date IS NOT NULL
@@ -55,10 +57,15 @@ public class SeoulCulturalEventTransformPersistence {
                     end_date = EXCLUDED.end_date,
                     event_time_desc = EXCLUDED.event_time_desc,
                     organizer = EXCLUDED.organizer,
+                    organizer_url = EXCLUDED.organizer_url,
                     image_url = EXCLUDED.image_url,
                     is_free = EXCLUDED.is_free,
                     fee_desc = EXCLUDED.fee_desc,
                     contact = EXCLUDED.contact,
+                    target_audience = EXCLUDED.target_audience,
+                    program_desc = EXCLUDED.program_desc,
+                    performers = EXCLUDED.performers,
+                    etc_desc = EXCLUDED.etc_desc,
                     updated_at = CURRENT_TIMESTAMP
                 """, sourceName);
     }

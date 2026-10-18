@@ -62,6 +62,9 @@ public class HangoutEntity {
     @Column(name = "organizer", length = 200)
     private String organizer;
 
+    @Column(name = "organizer_url", columnDefinition = "text")
+    private String organizerUrl;
+
     @Column(name = "image_url", columnDefinition = "text")
     private String imageUrl;
 
@@ -73,6 +76,18 @@ public class HangoutEntity {
 
     @Column(name = "contact", length = 200)
     private String contact;
+
+    @Column(name = "target_audience", length = 200)
+    private String targetAudience;
+
+    @Column(name = "program_desc", columnDefinition = "text")
+    private String programDesc;
+
+    @Column(name = "performers", columnDefinition = "text")
+    private String performers;
+
+    @Column(name = "etc_desc", columnDefinition = "text")
+    private String etcDesc;
 
     @Column(name = "status", nullable = false, length = 20)
     private String status;
@@ -150,6 +165,10 @@ public class HangoutEntity {
         return organizer;
     }
 
+    public String getOrganizerUrl() {
+        return organizerUrl;
+    }
+
     public String getImageUrl() {
         return imageUrl;
     }
@@ -164,6 +183,22 @@ public class HangoutEntity {
 
     public String getContact() {
         return contact;
+    }
+
+    public String getTargetAudience() {
+        return targetAudience;
+    }
+
+    public String getProgramDesc() {
+        return programDesc;
+    }
+
+    public String getPerformers() {
+        return performers;
+    }
+
+    public String getEtcDesc() {
+        return etcDesc;
     }
 
     public String getStatus() {

@@ -226,10 +226,15 @@ AI 결과는 구조화된 후보로 저장하고 곧바로 공개 API에 노출�
 | `start_date`, `end_date` | 행사 기간. **날짜 단위다.** 출처가 날짜만 주므로 시각을 지어내지 않는다 |
 | `event_time_desc` | `19:30`·`프로그램별 상이`처럼 날짜로 표현되지 않는 시간 정보. 자유 텍스트이며 **표시 전용으로 파싱하지 않는다** |
 | `organizer` | 주최·주관 기관 |
-| `image_url` | 대표 이미지 |
+| `organizer_url` | 주최 기관 홈페이지. `detail_url`(출처 포털의 상세 페이지)과 다른 주소다 |
+| `image_url` | 대표 이미지. 목록 카드와 지도 마커 썸네일에 쓴다 |
 | `is_free` | 무료 여부. 불명확하면 NULL |
 | `fee_desc` | `전석 20,000원` 같은 요금 문자열 |
 | `contact` | 문의처 |
+| `target_audience` | 관람 대상. `누구나`·`만 7세 이상`처럼 출처가 적어둔 문구를 그대로 쓴다 |
+| `program_desc` | 프로그램 설명 |
+| `performers` | 출연진 |
+| `etc_desc` | 그 밖의 안내 문구 |
 | `status` | `PUBLISHED` / `REVIEW` / `HIDDEN`. 날짜가 역전되는 등 품질이 의심스러운 행을 지우지 않고 숨겨둘 수 있다. 목록 API는 `PUBLISHED`만 반환한다 |
 | `created_at`, `updated_at` | 생성·갱신 시각. 재정제로 내용이 바뀌면 `updated_at`이 움직인다 |
 
