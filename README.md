@@ -42,6 +42,19 @@ The default local connection is `localhost:5432`, database `hangout_brochure`, u
 
 `hangout_categories` has explicitly seeded integer IDs, a stable unique `code` (such as `music`), and a display `name`. `hangout_category_assignments` connects each UUIDv7 hangout ID to one or more categories by ID.
 
+## Ingestion and transform
+
+Ingestion stores a source's rows as they arrive; transform promotes them into the public `hangouts` table. Both run per source and are safe to repeat.
+
+```bash
+./gradlew bootRun --args='--spring.main.web-application-type=none --app.command=ingest --source=seoul-cultural-events'
+./gradlew bootRun --args='--spring.main.web-application-type=none --app.command=transform --source=seoul-cultural-events'
+```
+
+Transform picks one canonical row per `content_hash`, because a source may list the same event under several ids. It then promotes rows that can satisfy the table's constraints, maps the source's own category labels through `ingestion_category_mappings`, and leaves anything it could not promote as `REVIEW` on the raw row rather than discarding it.
+
+See [docs/architecture.md](docs/architecture.md) for the full pipeline.
+
 ## Hangout list API
 
 `GET /api/hangouts` returns a cursor-paginated list of hangouts from PostgreSQL.

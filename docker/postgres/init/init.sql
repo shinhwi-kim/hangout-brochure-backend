@@ -57,7 +57,12 @@ INSERT INTO hangout_categories (id, code, name) VALUES
     (5, 'sport', '스포츠'),
     (6, 'workshop', '워크숍'),
     (7, 'community', '커뮤니티'),
-    (8, 'family', '가족');
+    (8, 'family', '가족'),
+    (9, 'theater', '연극'),
+    (10, 'musical', '뮤지컬·오페라'),
+    (11, 'dance', '무용'),
+    (12, 'movie', '영화'),
+    (13, 'festival', '축제');
 
 SELECT setval(pg_get_serial_sequence('hangout_categories', 'id'), (SELECT MAX(id) FROM hangout_categories));
 
@@ -127,6 +132,16 @@ CREATE INDEX IF NOT EXISTS idx_ingestion_raw_seoul_cultural_hangouts_processing
 CREATE INDEX IF NOT EXISTS idx_ingestion_raw_seoul_cultural_hangouts_content_hash
     ON ingestion_raw_seoul_cultural_hangouts (content_hash);
 
+-- Each source publishes its own taxonomy, so transforming a source means translating its
+-- labels into our categories. Kept as data rather than code so the mapping can change
+-- without a deploy. A source label may map to more than one category.
+CREATE TABLE IF NOT EXISTS ingestion_category_mappings (
+    source_name VARCHAR(100) NOT NULL REFERENCES ingestion_sources (source_name),
+    source_category TEXT NOT NULL,
+    category_id INT NOT NULL REFERENCES hangout_categories (id),
+    PRIMARY KEY (source_name, source_category, category_id)
+);
+
 ALTER TABLE hangouts
     ADD CONSTRAINT hangouts_source_name_fkey
     FOREIGN KEY (source_name) REFERENCES ingestion_sources (source_name);
@@ -138,3 +153,24 @@ VALUES (
     '서울시 문화행사',
     'http://openapi.seoul.go.kr:8088'
 );
+
+-- Seoul's 17 labels folded into our categories. '기타' is deliberately absent:
+-- it carries no meaning, so those events simply get no category.
+INSERT INTO ingestion_category_mappings (source_name, source_category, category_id) VALUES
+    ('seoul-cultural-events', '클래식',         1),
+    ('seoul-cultural-events', '콘서트',         1),
+    ('seoul-cultural-events', '국악',           1),
+    ('seoul-cultural-events', '독주/독창회',    1),
+    ('seoul-cultural-events', '전시/미술',      4),
+    ('seoul-cultural-events', '교육/체험',      6),
+    ('seoul-cultural-events', '연극',           9),
+    ('seoul-cultural-events', '뮤지컬/오페라',  10),
+    ('seoul-cultural-events', '무용',           11),
+    ('seoul-cultural-events', '영화',           12),
+    ('seoul-cultural-events', '축제-문화/예술', 13),
+    ('seoul-cultural-events', '축제-기타',      13),
+    ('seoul-cultural-events', '축제-전통/역사', 13),
+    ('seoul-cultural-events', '축제-자연/경관', 13),
+    ('seoul-cultural-events', '축제-시민화합',  13),
+    ('seoul-cultural-events', '축제-관광/체육', 13),
+    ('seoul-cultural-events', '축제-관광/체육', 5);

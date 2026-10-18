@@ -109,6 +109,42 @@ cron이 Spring 애플리케이션 안에서 계속 돌도록 하기보다, 초�
 
 여러 출처를 한 번에 실행하려면 `--source=...` 옵션을 반복한다. 예를 들어 `--source=seoul-cultural-events --source=another-source`처럼 지정할 수 있다.
 
+수집이 원문을 저장하면 **정제(transform)** 명령이 그 원문을 공개용 `hangouts`로 승격시킨다. 수집과 같은 모양으로 출처마다 실행한다.
+
+```bash
+./gradlew bootRun --args='--spring.main.web-application-type=none --app.command=transform --source=seoul-cultural-events'
+```
+
+정제는 다음 순서로 동작하며, 몇 번을 다시 돌려도 결과가 같다.
+
+1. **정본 선정** — `content_hash`가 같은 원문은 한 행사로 보고 `register_date`가 가장 늦은 행을 정본으로 고른다. 서울 문화행사는 같은 행사를 다른 `cultcode`로 다시 등재하는 경우가 있어 `cultcode`만으로는 중복을 못 거른다.
+2. **승격** — 정본 중 좌표가 있고 `end_date >= start_date`인 행을 `hangouts`에 넣는다. `source_raw_id` UNIQUE와 `ON CONFLICT DO UPDATE` 덕분에 재실행이 중복을 만들지 않고 내용만 갱신한다. 의미 없는 `주최 = 기타`는 NULL로 내린다.
+3. **카테고리 배정** — `ingestion_category_mappings`를 따라 `hangout_category_assignments`를 채운다. 매핑에서 사라진 배정은 먼저 지우므로, 매핑을 고치고 다시 돌리면 결과가 수렴한다.
+4. **상태 표시** — 승격된 원문과 중복으로 제외된 원문은 `PROCESSED`, 정본인데 승격하지 못한 원문은 `REVIEW`로 둔다. 버리지 않고 남겨 사람이 확인할 수 있게 한다.
+
+좌표가 없거나(`latitude`가 `NOT NULL`) 날짜가 역전된 원문은 `hangouts`의 제약을 만족시킬 수 없어 `REVIEW`에 머문다. 현재 서울 문화행사 기준으로 원문 19,636건 중 정본 19,624건, 승격 19,068건, `REVIEW` 556건이다.
+
+#### 정본 선정이 값을 결정한다
+
+`content_hash`는 제목·장소·주최·시작일·종료일만 보므로, 같은 해시로 묶인 두 원문이 **해시에 들어가지 않은 필드에서는 다를 수 있다.** 현재 12쌍 중 6쌍이 그렇고, 그 경우 정본의 값이 그대로 공개된다. 예를 들면 이렇다.
+
+| 행사 | 이른 등록 | 늦은 등록(정본) | 공개되는 값 |
+| --- | --- | --- | --- |
+| 2026 종로 가족공연축제 | `연극` | `축제-문화/예술` | 카테고리가 `theater`가 아닌 `festival` |
+| 비내림국악관현악단 정기 연주회 | `국악`·유료 | `클래식`·무료 | `music`, 무료 |
+| 서울풍물시장 전통문화체험관 | 무료 | 유료 | 유료 |
+
+**늦게 등록된 쪽을 따르는 것이 규칙이다.** 출처가 나중에 올린 내용이 그 행사에 대한 최신 판단이라고 보기 때문이다. 자동으로 고르는 만큼 알림이나 검토 대기를 두지 않으며, 접힌 원문은 지우지 않고 남겨 두므로 필요하면 언제든 확인할 수 있다.
+
+```sql
+SELECT r.cultcode, r.title, r.register_date, r.source_category, r.is_free
+FROM ingestion_raw_seoul_cultural_hangouts r
+WHERE r.processing_status = 'PROCESSED'
+  AND NOT EXISTS (SELECT 1 FROM hangouts h WHERE h.source_raw_id = r.id);
+```
+
+이 규칙이 위험해지는 때는 **서로 다른 두 행사가 다섯 필드까지 같아 한 행사로 접히는 경우**다. 같은 장소에서 같은 날 회차만 나뉘는 행사가 후보인데, 회차는 `event_time_desc`로만 구분되고 그 필드는 해시에서 빠져 있다. 현재 12쌍은 모두 같은 행사의 재등재로 확인되어 그런 사례는 없다. 생기기 시작하면 접힌 원문을 `REVIEW`로 돌려 드러나게 하는 것이 다음 수순이다.
+
 개발 단계에서는 이 명령을 직접 실행해 결과를 확인하고, 운영에서는 동일한 명령을 컨테이너 작업으로 패키징해 cron이 호출하게 한다. 실행 주기는 열린데이터광장에 명시된 일 1회 갱신에 맞춰 하루 한 번부터 시작할 수 있다.
 
 조회 요청은 `Controller → Service → HangoutRepository → JPA Repository → Hibernate → PostgreSQL` 순서로 처리한다. Controller는 HTTP DTO를 받고, Service는 조회 조건과 페이지 결과를 다루며, Adapter는 JPA Entity를 API에 독립적인 domain 모델로 변환한다.
@@ -206,6 +242,7 @@ AI 결과는 구조화된 후보로 저장하고 곧바로 공개 API에 노출�
 | `ingestion_sources` | 수집 출처 이름, 종류, 표시명, 기본 URL, 활성화 여부와 마지막 성공 시각 관리 |
 | `ingestion_runs` | 실행 시작·종료, 성공/실패, 조회·저장 건수와 오류 기록 |
 | `ingestion_raw_seoul_cultural_hangouts` | 서울 문화행사 데이터셋의 행사 필드, 고유 ID(`cultcode`)와 상세 URL, 내용 해시, 확인 시각 및 처리 상태 보관 |
+| `ingestion_category_mappings` | 출처의 분류명을 내부 `hangout_categories`로 옮기는 표. 코드가 아닌 데이터라 배포 없이 고칠 수 있고, 한 분류명이 여러 카테고리로 갈 수 있다 |
 
 `ingestion_raw_seoul_cultural_hangouts`는 데이터셋의 행사 필드를 다음처럼 저장한다.
 
