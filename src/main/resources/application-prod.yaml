@@ -1,0 +1,5 @@
+app:
+  cors:
+    allowed-origins:
+      - https://hangout-brochure-6kolua818-shinhwikims-projects.vercel.app
+      - https://hangout-brochure.vercel.app

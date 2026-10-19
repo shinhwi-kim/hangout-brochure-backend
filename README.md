@@ -7,7 +7,7 @@
 `application.yaml` lists every setting the application reads and holds no secrets; a secret appears there only as a placeholder such as `${SEOUL_OPEN_API_KEY:}`.
 
 ```bash
-./gradlew bootRun   # reads .env, then .env.local on top of it
+./gradlew bootRun   # local profile settings; reads .env, then .env.local
 ```
 
 Values are layered, each source overriding the ones below it:
@@ -23,6 +23,16 @@ Values are layered, each source overriding the ones below it:
 
 ```bash
 cp .env .env.local   # .env.local is gitignored
+```
+
+To run with production CORS origins, activate the `prod` profile. It reads `.env.prod`
+after `.env`; `.env.prod` is also gitignored. The default `local` profile reads
+`application-local.yaml`, which allows `http://localhost:5173`. The `prod` profile reads
+`application-prod.yaml`, which allows the two Vercel site origins.
+
+```bash
+cp .env.local .env.prod   # if the same secret values are needed
+./gradlew bootRun --args='--spring.profiles.active=prod'
 ```
 
 It is parsed as a Java properties file, so write `KEY=value` with no `export` prefix and no quotes — quotes are kept as part of the value. List only secrets that have no default, because a blank value overrides the `application.yaml` default with an empty string.
