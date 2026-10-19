@@ -36,7 +36,26 @@ docker compose down    # Remove the container; keep database data
 docker compose down -v # Remove the container and database data
 ```
 
-On first start with an empty database volume, Docker runs the scripts in `db-init/` in filename order: `01-schema.sql` creates the tables and seeds the categories, category mappings and source definitions, then `02-mock-data.sql` adds 100 local sample hangouts. They run only when the volume is empty, so changing the schema locally means recreating it with `docker compose down -v`.
+On first start with an empty database volume, Postgres runs everything in `db-init/` in
+filename order:
+
+| Script | Runs | Contents |
+| --- | --- | --- |
+| `01-schema.sql` | always | tables, indexes and constraints |
+| `02-seed.sql` | always | the categories, sources and category mappings the app needs to work |
+| `03-additional-seed.sh` | only with `LOAD_MOCK_DATA=true` | 100 sample hangouts from `db-seed/mock-data.sql` |
+
+```bash
+docker compose up -d                       # schema and reference data only
+LOAD_MOCK_DATA=true docker compose up -d   # plus the sample hangouts
+```
+
+The samples are off by default because they land in the same tables as ingested data,
+which makes a real ingest hard to read. `db-seed/` is mounted outside the init
+directory on purpose, so Postgres never picks the file up on its own.
+
+These scripts run only when the volume is empty, so changing the schema locally means
+recreating it with `docker compose down -v`.
 
 The default local connection is `localhost:5432`, database `hangout_brochure`, user `hangout_dev`, password `hangout_dev`. Override these with `POSTGRES_PORT`, `POSTGRES_DB`, `POSTGRES_USER`, and `POSTGRES_PASSWORD` environment variables. These defaults are for local development only.
 
