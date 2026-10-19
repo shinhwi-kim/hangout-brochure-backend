@@ -1,0 +1,4 @@
+*
+!build/libs/*.jar
+# bootJar also leaves a dependency-less -plain.jar behind; copying it would ship an app that cannot start.
+build/libs/*-plain.jar
