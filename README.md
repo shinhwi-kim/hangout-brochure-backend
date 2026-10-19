@@ -36,7 +36,7 @@ docker compose down    # Remove the container; keep database data
 docker compose down -v # Remove the container and database data
 ```
 
-On first start with an empty database volume, `docker/postgres/init/init.sql` creates the schemas and inserts the eight categories and Seoul cultural events source definition. Docker then runs `insert-test-mock-data.sql` to add 100 local sample hangouts. These initialization scripts run only when the database volume is empty.
+On first start with an empty database volume, Docker runs the scripts in `db-init/` in filename order: `01-schema.sql` creates the tables and seeds the categories, category mappings and source definitions, then `02-mock-data.sql` adds 100 local sample hangouts. They run only when the volume is empty, so changing the schema locally means recreating it with `docker compose down -v`.
 
 The default local connection is `localhost:5432`, database `hangout_brochure`, user `hangout_dev`, password `hangout_dev`. Override these with `POSTGRES_PORT`, `POSTGRES_DB`, `POSTGRES_USER`, and `POSTGRES_PASSWORD` environment variables. These defaults are for local development only.
 
